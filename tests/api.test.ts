@@ -116,6 +116,17 @@ describe('quick functions (spec §installation)', () => {
     expect(tm).toBeCloseTo(expected, 9);
   });
 
+  it('honours degeneracy modes end to end', () => {
+    const min = new PrimerAnalyzer({}, undefined, { degeneracyMode: 'min' }).evaluate(
+      'ATGCATGCATRY',
+    );
+    const mean = new PrimerAnalyzer({}).evaluate('ATGCATGCATRY');
+    expect(min.tm).toBeLessThan(mean.tm);
+    expect(min.degeneracy.mode).toBe('min');
+    expect(calculateTm('ATGCATGCATRY', {}, 'min')).toBeCloseTo(min.tm, 9);
+    expect(analyzePrimer('ATGCATGCATRY', {}, { degeneracyMode: 'min' }).tm).toBeCloseTo(min.tm, 9);
+  });
+
   it('analyzePrimer matches new PrimerAnalyzer().evaluate()', () => {
     const a = analyzePrimer('ATGCGTAGCTAGCTAGCTA');
     const b = new PrimerAnalyzer().evaluate('ATGCGTAGCTAGCTAGCTA');

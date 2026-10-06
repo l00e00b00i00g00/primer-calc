@@ -1,4 +1,4 @@
-import type { DegeneracyInfo, ResolvedConditions } from '../types.js';
+import type { DegeneracyInfo, DegeneracyMode, ResolvedConditions } from '../types.js';
 import { IUPAC_BASES, degeneracyFactor } from './iupac.js';
 import { meltingTemperature, toUnit } from '../thermo/tm.js';
 
@@ -66,12 +66,21 @@ export function* enumerateVariants(seq: string): Generator<string> {
 /**
  * Degeneracy analysis with O'Donnell–Maloney Tm approximation.
  *
- * Every concrete variant is assumed equimolar at synthesis, so the reported
- * primer Tm is the abundance-weighted mean over enumerated variants
- * (exhaustive when D ≤ 4096, else a deterministic sample); min/max bound the
- * observed stability range.
+ * Every concrete variant is assumed equimolar at synthesis. The reported Tm
+ * follows `mode`: abundance-weighted mean (`mean`), least stable variant
+ * (`min`), or canonical first-base variant (`consensus`); min/max always
+ * bound the observed stability range.
  */
-export function analyzeDegeneracy(seq: string, cond: ResolvedConditions): DegeneracyInfo {
+export function analyzeDegeneracy(
+  seq: string,
+  cond: ResolvedConditions,
+  mode: DegeneracyMode = 'mean',
+): DegeneracyInfo {
+  if (mode !== 'mean' && mode !== 'min' && mode !== 'consensus') {
+    throw new RangeError(
+      `Invalid degeneracy mode ${JSON.stringify(mode)}: expected 'mean', 'min' or 'consensus'.`,
+    );
+  }
   const factor = degeneracyFactor(seq);
   const isDegenerate = factor > 1;
   if (!isDegenerate) {
@@ -81,6 +90,7 @@ export function analyzeDegeneracy(seq: string, cond: ResolvedConditions): Degene
       tmMin: null,
       tmMax: null,
       tmWeighted: null,
+      mode,
       variantsEnumerated: 1,
     };
   }
@@ -96,14 +106,23 @@ export function analyzeDegeneracy(seq: string, cond: ResolvedConditions): Degene
     sum += tm;
     count++;
   }
+  const mean = sum / count;
+  const tmWeighted = mode === 'min' ? min : mode === 'consensus' ? consensusTm(seq, cond) : mean;
   return {
     factor,
     isDegenerate: true,
     tmMin: min,
     tmMax: max,
-    tmWeighted: sum / count,
+    tmWeighted,
+    mode,
     variantsEnumerated: count,
   };
+}
+
+/** Tm of the canonical first-base variant, in the configured unit. */
+function consensusTm(seq: string, cond: ResolvedConditions): number {
+  const { tmC } = meltingTemperature(canonicalVariant(seq), cond);
+  return toUnit(tmC, cond.temp_unit);
 }
 
 /** Canonical (first-base) concrete representative of a degenerate sequence. */

@@ -1,5 +1,6 @@
 import type {
   AnalysisWarning,
+  DegeneracyMode,
   PcrConditions,
   PrimerAnalysis,
   ResolvedConditions,
@@ -89,10 +90,16 @@ export function resolveConditions(input: PcrConditions = {}): ResolvedConditions
 export class PrimerAnalyzer {
   readonly conditions: ResolvedConditions;
   readonly backend: ComputeBackend;
+  readonly degeneracyMode: DegeneracyMode;
 
-  constructor(conditions: PcrConditions = {}, backend?: ComputeBackend) {
+  constructor(
+    conditions: PcrConditions = {},
+    backend?: ComputeBackend,
+    opts: { degeneracyMode?: DegeneracyMode } = {},
+  ) {
     this.conditions = resolveConditions(conditions);
     this.backend = backend ?? new TypeScriptBackend();
+    this.degeneracyMode = opts.degeneracyMode ?? 'mean';
   }
 
   /** Full analysis of one primer sequence. */
@@ -108,7 +115,7 @@ export class PrimerAnalyzer {
 
     // Degenerate primers: Tm on the abundance-weighted variant space,
     // structures on the canonical variant (documented approximation).
-    const degeneracy = analyzeDegeneracy(sequence, cond);
+    const degeneracy = analyzeDegeneracy(sequence, cond, this.degeneracyMode);
     const canon = canonicalVariant(sequence);
 
     const { tmC, dH, dS, naEq_mM } = this.backend.tm(canon, cond);

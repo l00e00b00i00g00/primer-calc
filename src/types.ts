@@ -68,14 +68,22 @@ export interface DegeneracyInfo {
   /** Tm of the most stable enumerated variant. */
   tmMax: number | null;
   /**
-   * Abundance-weighted mean Tm over enumerated variants
-   * (O'Donnell–Maloney). Exhaustive when D ≤ 4096, else a deterministic
-   * sample — min/max then bound the observed, not the theoretical, range.
+   * Tm selected by the degeneracy mode (O'Donnell–Maloney mean by default).
+   * Exhaustive when D ≤ 4096, else over a deterministic sample.
    */
   tmWeighted: number | null;
+  /** Selection rule applied for {@link DegeneracyInfo.tmWeighted}. */
+  mode: DegeneracyMode;
   /** Number of concrete variants effectively enumerated. */
   variantsEnumerated: number;
 }
+
+/**
+ * How the reported Tm of a degenerate primer is selected:
+ * `mean` (abundance-weighted, O'Donnell–Maloney), `min` (most conservative),
+ * `consensus` (canonical first-base variant).
+ */
+export type DegeneracyMode = 'mean' | 'min' | 'consensus';
 
 /** Hairpin (stem–loop) analysis result. */
 export interface HairpinResult {
@@ -191,6 +199,20 @@ export interface TargetDuplexAnalysis {
 export interface PoolPrimer {
   id: string;
   seq: string;
+}
+
+/** Forward/reverse primer pair analysis. */
+export interface PrimerPairAnalysis {
+  forward: PrimerAnalysis;
+  reverse: PrimerAnalysis;
+  /** Absolute Tm difference (configured unit). */
+  tmDifference: number;
+  /** True when the Tm gap is within the recommended range (≤ 5 °C). */
+  tmMatched: boolean;
+  /** Forward↔reverse heterodimer. */
+  crossDimer: DimerResult;
+  warnings: AnalysisWarning[];
+  hasRisks: boolean;
 }
 
 /** One cross-dimer conflict between two pool members. */

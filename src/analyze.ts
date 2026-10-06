@@ -1,4 +1,4 @@
-import type { PcrConditions, PrimerAnalysis } from './types.js';
+import type { DegeneracyMode, PcrConditions, PrimerAnalysis } from './types.js';
 import { PrimerAnalyzer } from './PrimerAnalyzer.js';
 import { normalizeSequence } from './sequence/validate.js';
 import { analyzeDegeneracy } from './sequence/degenerate.js';
@@ -13,11 +13,15 @@ import { TypeScriptBackend } from './backend/backend.js';
  * const tm = calculateTm('ATGCGTAGCTAGCTAGCTA');
  * ```
  */
-export function calculateTm(seq: string, conditions: PcrConditions = {}): number {
+export function calculateTm(
+  seq: string,
+  conditions: PcrConditions = {},
+  degeneracyMode: DegeneracyMode = 'mean',
+): number {
   const sequence = normalizeSequence(seq);
   const cond = resolveConditions(conditions);
   const backend = new TypeScriptBackend();
-  const degeneracy = analyzeDegeneracy(sequence, cond);
+  const degeneracy = analyzeDegeneracy(sequence, cond, degeneracyMode);
   if (degeneracy.isDegenerate) return degeneracy.tmWeighted as number;
   return toUnit(backend.tm(sequence, cond).tmC, cond.temp_unit);
 }
@@ -29,6 +33,10 @@ export function calculateTm(seq: string, conditions: PcrConditions = {}): number
  * const analysis = analyzePrimer('ATGCGTAGCTAGCTAGCTA');
  * ```
  */
-export function analyzePrimer(seq: string, conditions: PcrConditions = {}): PrimerAnalysis {
-  return new PrimerAnalyzer(conditions).evaluate(seq);
+export function analyzePrimer(
+  seq: string,
+  conditions: PcrConditions = {},
+  opts: { degeneracyMode?: DegeneracyMode } = {},
+): PrimerAnalysis {
+  return new PrimerAnalyzer(conditions, undefined, opts).evaluate(seq);
 }

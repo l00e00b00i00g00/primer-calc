@@ -9,6 +9,7 @@ import {
   reverseComplement,
 } from '../src/sequence/iupac.js';
 import { PrimerValidationError, normalizeSequence } from '../src/sequence/validate.js';
+import { analyzePrimer } from '../src/analyze.js';
 import { atContent, baseCounts, gcContent } from '../src/sequence/gc.js';
 import {
   analyzeDegeneracy,
@@ -155,5 +156,25 @@ describe('degeneracy', () => {
     expect(info.tmWeighted as number).toBeGreaterThanOrEqual(info.tmMin as number);
     expect(info.tmWeighted as number).toBeLessThanOrEqual(info.tmMax as number);
     expect(info.variantsEnumerated).toBe(4);
+    expect(info.mode).toBe('mean');
+  });
+
+  it('selects Tm by degeneracy mode (mean/min/consensus)', () => {
+    const cond = resolveConditions({});
+    const mean = analyzeDegeneracy('ATGCATGCATRY', cond, 'mean');
+    const min = analyzeDegeneracy('ATGCATGCATRY', cond, 'min');
+    const consensus = analyzeDegeneracy('ATGCATGCATRY', cond, 'consensus');
+    expect(min.tmWeighted).toBe(min.tmMin);
+    expect(mean.tmWeighted as number).toBeGreaterThan(min.tmWeighted as number);
+    expect(consensus.tmWeighted as number).toBeGreaterThanOrEqual(min.tmMin as number);
+    expect(consensus.tmWeighted as number).toBeLessThanOrEqual(consensus.tmMax as number);
+    // Consensus = canonical (first-base) variant Tm.
+    expect(consensus.tmWeighted).toBe(analyzePrimer('ATGCATGCATAC', cond).tm);
+  });
+
+  it('rejects unknown degeneracy modes', () => {
+    expect(() => analyzeDegeneracy('AN', resolveConditions({}), 'median' as never)).toThrow(
+      RangeError,
+    );
   });
 });

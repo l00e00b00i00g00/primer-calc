@@ -8,6 +8,7 @@ export { PrimerAnalyzer, resolveConditions } from './PrimerAnalyzer.js';
 export { MultiplexPool } from './MultiplexPool.js';
 export { analyzePrimer, calculateTm } from './analyze.js';
 export { evaluateAgainstTarget } from './target.js';
+export { analyzePrimerPair, PAIR_TM_TOLERANCE } from './pair.js';
 
 export { PrimerValidationError } from './sequence/validate.js';
 export {
@@ -96,6 +97,8 @@ export type {
   PrimerAnalysis,
   TargetDuplexAnalysis,
   DuplexDifference,
+  PrimerPairAnalysis,
+  DegeneracyMode,
   PoolPrimer,
   CrossDimerConflict,
   CrossDimerizationResult,
