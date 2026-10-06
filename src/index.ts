@@ -23,9 +23,9 @@ export { enumerateVariants, analyzeDegeneracy, canonicalVariant } from './sequen
 
 export { duplexThermodynamics, alignmentThermodynamics } from './thermo/nearest-neighbor.js';
 export type { DuplexFlanks } from './thermo/nearest-neighbor.js';
-export { sodiumEquivalent, saltAdjustmentCelsius } from './thermo/salt.js';
+export { sodiumEquivalent, saltAdjustmentCelsius, freeMagnesium, owczarzySaltTm } from './thermo/salt.js';
 export { gibbsFreeEnergy, tmTwoState, tmSelfComplementary } from './thermo/gibbs.js';
-export { meltingTemperature } from './thermo/tm.js';
+export { meltingTemperature, dimerMeltingTemp } from './thermo/tm.js';
 
 export { bestHairpin } from './structure/hairpin.js';
 export { bestDimer } from './structure/dimer.js';
@@ -62,6 +62,7 @@ export {
   SYMMETRY_DS,
   CRITICAL_DG,
   WARNING_DG,
+  OWCZARZY_2008,
   DEFAULT_CONDITIONS,
   nnParams,
   danglingParams,

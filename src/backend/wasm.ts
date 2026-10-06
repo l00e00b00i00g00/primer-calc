@@ -2,7 +2,8 @@ import type { DimerResult, HairpinResult, ResolvedConditions, ThreePrimeResult }
 import { TypeScriptBackend, type ComputeBackend } from './backend.js';
 import { canonicalVariant } from '../sequence/degenerate.js';
 import { sodiumEquivalent, saltAdjustmentCelsius } from '../thermo/salt.js';
-import { primerConcToMolar } from '../thermo/tm.js';
+import { primerConcToMolar, dimerMeltingTemp } from '../thermo/tm.js';
+import { gcContent } from '../sequence/gc.js';
 
 /**
  * Minimal surface of the compiled `@sfstudio_tools/primer-calc-wasm` module
@@ -66,6 +67,10 @@ interface WasmDimerReport {
   paired?: number;
   run3p?: number;
   anchored?: boolean;
+  dh?: number;
+  ds?: number;
+  gc?: number;
+  n?: number;
 }
 
 /**
@@ -143,10 +148,28 @@ export class WasmBackend implements ComputeBackend {
       return none;
     }
     if (!report.found) return none;
+    // Dimer Tm always flows through the shared TypeScript helper, so every
+    // salt strategy (including Owczarzy, which needs the traced duplex
+    // composition) behaves identically on both backends. The Rust-side tm
+    // stays available for direct module consumers.
+    const gc =
+      typeof report.gc === 'number' ? report.gc : gcContent(a) / 100;
+    const n = typeof report.n === 'number' ? report.n : a.length;
+    const tm =
+      typeof report.dh === 'number' && typeof report.ds === 'number'
+        ? dimerMeltingTemp(
+            report.dh,
+            report.ds,
+            cond,
+            selfComplementary,
+            gc,
+            n,
+          )
+        : (report.tm as number);
     return {
       found: true,
       deltaG: report.dg as number,
-      tm: report.tm as number,
+      tm,
       pairedBases: report.paired as number,
       threePrimeRun: report.run3p as number,
       threePrimeAnchored: report.anchored === true,

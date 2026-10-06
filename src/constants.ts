@@ -139,6 +139,22 @@ export const DEFAULT_CONDITIONS = {
   eval_temp_c: 37,
 } as const;
 
+/**
+ * Owczarzy et al. (2008) divalent-salt empirical constants, via Biopython's
+ * verified implementation (Biochemistry 47:5336–5353). `KA` is the Mg:dNTP
+ * dissociation constant (M⁻¹) for the free-Mg²⁺ equilibrium.
+ */
+export const OWCZARZY_2008 = {
+  a: 3.92,
+  b: -0.911,
+  c: 6.26,
+  d: 1.42,
+  e: -48.2,
+  f: 52.5,
+  g: 8.31,
+  KA: 3e4,
+} as const;
+
 type DangleEntry = [dH: number, dG37: number];
 type DangleTable = Record<string, Record<string, DangleEntry>>;
 

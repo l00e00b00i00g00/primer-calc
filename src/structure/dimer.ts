@@ -1,10 +1,8 @@
 import type { DimerResult, ResolvedConditions } from '../types.js';
 import type { DuplexFlanks } from '../thermo/nearest-neighbor.js';
-import { R_CAL, ZERO_C_KELVIN } from '../constants.js';
-import { gibbsFreeEnergy, tmSelfComplementary } from '../thermo/gibbs.js';
+import { gibbsFreeEnergy } from '../thermo/gibbs.js';
 import { alignmentThermodynamics } from '../thermo/nearest-neighbor.js';
-import { saltAdjustmentCelsius, sodiumEquivalent } from '../thermo/salt.js';
-import { primerConcToMolar } from '../thermo/tm.js';
+import { dimerMeltingTemp } from '../thermo/tm.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
 
 /** Minimum 3′-terminal paired run (nt) considered polymerase-extendable. */
@@ -23,8 +21,8 @@ interface ScoredBlock {
  *
  * Strand `b` is scanned in antiparallel orientation over every offset; each
  * maximal Watson–Crick block — plus merges across a single internal mismatch
- * (one shared initiation) — is scored with SantaLucia thermodynamics.
- * Dangling ends are ignored (slightly conservative ΔG).
+ * (one shared initiation) — is scored with SantaLucia thermodynamics,
+ * including single-nucleotide dangling ends (Bommarito et al. 2000).
  *
  * @param selfComplementary set for homodimers (symmetry −1.4 e.u., R·ln Ct).
  */
@@ -79,11 +77,27 @@ export function bestDimer(
       bottomReached ? leadingRun(depBottom) : 0,
     );
     const anchored = run >= ANCHORED_RUN_MIN;
+    // Traced duplex composition for the Owczarzy %GC/N (GC pairs over span).
+    let gcPaired = 0;
+    for (let p = 0; p < top.length; p++) {
+      const t = (top[p] as string).toUpperCase();
+      const u = (bottom[p] as string).toUpperCase();
+      if (t !== '-' && u !== '-' && isWatsonCrickPair(t, u) && (t === 'G' || t === 'C')) {
+        gcPaired++;
+      }
+    }
     if (best.deltaG === null || dG < best.deltaG) {
       best = {
         found: true,
         deltaG: dG,
-        tm: dimerTm(dH, dS, cond, selfComplementary),
+        tm: dimerMeltingTemp(
+          dH,
+          dS,
+          cond,
+          selfComplementary,
+          gcPaired / len,
+          len,
+        ),
         pairedBases: paired,
         threePrimeRun: run,
         threePrimeAnchored: anchored,
@@ -143,28 +157,6 @@ export function bestDimer(
     }
   }
   return best;
-}
-
-/** Dimer duplex Tm honoring homo/hetero concentration conventions. */
-function dimerTm(
-  dH: number,
-  dS: number,
-  cond: ResolvedConditions,
-  selfComplementary: boolean,
-): number {
-  const ctM = primerConcToMolar(cond.primer_conc);
-  const saltAdj =
-    cond.salt_method === 'vonAhsen'
-      ? saltAdjustmentCelsius(sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc))
-      : 0;
-  const concTerm = selfComplementary ? R_CAL * Math.log(ctM) : R_CAL * Math.log(ctM / 2);
-  void concTerm;
-  // Homo path reuses the reference two-state self-complementary formula.
-  let tm = selfComplementary
-    ? tmSelfComplementary(dH, dS, ctM, saltAdj)
-    : (dH * 1000) / (dS + R_CAL * Math.log(ctM / 2)) - ZERO_C_KELVIN + saltAdj;
-  tm -= 0.75 * cond.dmso_percent;
-  return tm;
 }
 
 /** Paired run counted backwards from the right end (top strand, 5′→3′). */

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `salt_method: 'owczarzy'` (Owczarzy et al. 2004/2008, via Biopython goldens):
+  mixed monovalent/divalent correction with Ka Mg:dNTP equilibrium and the
+  R-based decision tree; strictly closer to Primer3 than von Ahsen on every
+  goldens probe. New exports: `owczarzySaltTm`, `freeMagnesium`,
+  `dimerMeltingTemp`, `OWCZARZY_2008`; WASM reports carry `dh/ds/gc/n` so the
+  WASM backend shares the exact TypeScript Tm path.
+
 ## [0.1.0] - 2026-10-06
 
 ### Added

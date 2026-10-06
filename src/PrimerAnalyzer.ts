@@ -37,10 +37,10 @@ function finiteNumber(
 /** Resolves user conditions over {@link DEFAULT_CONDITIONS} (validated). */
 export function resolveConditions(input: PcrConditions = {}): ResolvedConditions {
   const salt_method = input.salt_method ?? DEFAULT_CONDITIONS.salt_method;
-  if (salt_method !== 'vonAhsen' && salt_method !== 'none') {
+  if (salt_method !== 'vonAhsen' && salt_method !== 'owczarzy' && salt_method !== 'none') {
     throw new RangeError(
       `Invalid PCR condition salt_method=${String(input.salt_method)}: ` +
-        `expected 'vonAhsen' or 'none'.`,
+        `expected 'vonAhsen', 'owczarzy' or 'none'.`,
     );
   }
   const temp_unit = input.temp_unit ?? DEFAULT_CONDITIONS.temp_unit;

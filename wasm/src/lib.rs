@@ -205,6 +205,8 @@ struct Best {
     paired: usize,
     run: usize,
     anchored: bool,
+    gc_frac: f64,
+    span: usize,
 }
 
 fn depict(top: &[u8], bot: &[u8]) -> (Vec<u8>, Vec<u8>) {
@@ -274,6 +276,14 @@ fn scan(
                 // (3′ end right), bottom is 3′→5′ (3′ end left).
                 let run = trailing_run_cond(&td, a_start + len == a.len())
                     .max(leading_run_cond(&ud, b_start == 0));
+                // Traced duplex composition for Owczarzy %GC/N (GC pairs/span).
+                let gc = top
+                    .iter()
+                    .zip(bot.iter())
+                    .filter(|(&x, &y)| {
+                        is_wc(x, y) && (x == b'G' || x == b'C')
+                    })
+                    .count();
                 *best = Some(Best {
                     dg,
                     dh,
@@ -281,6 +291,8 @@ fn scan(
                     paired,
                     run,
                     anchored: run >= 2,
+                    gc_frac: gc as f64 / len as f64,
+                    span: len,
                 });
             }
         }
@@ -366,12 +378,16 @@ pub fn dimer_report_json(
             // `{}` prints the shortest round-tripping decimal: bit-identical
             // f64 values on the TypeScript side after JSON.parse.
             format!(
-                "{{\"found\":true,\"dg\":{},\"tm\":{},\"paired\":{},\"run3p\":{},\"anchored\":{}}}",
+                "{{\"found\":true,\"dg\":{},\"tm\":{},\"paired\":{},\"run3p\":{},\"anchored\":{},\"dh\":{},\"ds\":{},\"gc\":{},\"n\":{}}}",
                 best.dg,
                 tm,
                 best.paired,
                 best.run,
-                if best.anchored { "true" } else { "false" }
+                if best.anchored { "true" } else { "false" },
+                best.dh,
+                best.ds,
+                best.gc_frac,
+                best.span
             )
         }
     }

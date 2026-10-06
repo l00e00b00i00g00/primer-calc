@@ -92,8 +92,12 @@ describe('conditions validation', () => {
   });
 
   it('rejects unknown salt methods and temperature units', () => {
-    expect(() => resolveConditions({ salt_method: 'owczarzy' as never })).toThrow(RangeError);
+    expect(() => resolveConditions({ salt_method: 'schildkraut' as never })).toThrow(RangeError);
     expect(() => resolveConditions({ temp_unit: 'K' as never })).toThrow(RangeError);
+  });
+
+  it('accepts the Owczarzy salt method', () => {
+    expect(resolveConditions({ salt_method: 'owczarzy' }).salt_method).toBe('owczarzy');
   });
 
   it('rejects non-numeric, NaN and out-of-range conditions', () => {

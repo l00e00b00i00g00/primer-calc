@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { danglingParams, nnParams } from '../src/constants.js';
 import { alignmentThermodynamics, duplexThermodynamics } from '../src/thermo/nearest-neighbor.js';
-import { saltAdjustmentCelsius, sodiumEquivalent } from '../src/thermo/salt.js';
+import { saltAdjustmentCelsius, sodiumEquivalent, owczarzySaltTm, freeMagnesium } from '../src/thermo/salt.js';
+import { gcContent } from '../src/sequence/gc.js';
 import { gibbsFreeEnergy } from '../src/thermo/gibbs.js';
 import { meltingTemperature } from '../src/thermo/tm.js';
 import { hairpinLoopParams } from '../src/constants.js';
@@ -151,8 +152,7 @@ describe('alignmentThermodynamics flanks', () => {
   });
 });
 
-describe('salt corrections (von Ahsen 2001)', () => {
-  it('computes the sodium equivalent', () => {
+describe('salt corrections (von Ahsen 2001)', () => {  it('computes the sodium equivalent', () => {
     // 50 + 120·√(2.5 − 0.8) = 50 + 120·√1.7 ≈ 206.46 mM
     expect(sodiumEquivalent(50, 2.5, 0.8)).toBeCloseTo(206.46, 2);
   });
@@ -164,6 +164,47 @@ describe('salt corrections (von Ahsen 2001)', () => {
   it('computes the 16.6·log₁₀ adjustment', () => {
     expect(saltAdjustmentCelsius(206.46)).toBeCloseTo(-11.37, 2);
     expect(saltAdjustmentCelsius(1000)).toBeCloseTo(0, 9);
+  });
+});
+
+describe('Owczarzy salt correction (2004/2008, via Biopython goldens)', () => {
+  // Frozen from Bio.SeqUtils.MeltingTemp.salt_correction(..., method=7):
+  // Tm = 1/(1/Tm_old + corr) − 273.15 for (Na, Mg, dNTPs, seq, Tm_old).
+  const GOLDENS: Array<[number, number, number, string, number, number]> = [
+    [50, 2.5, 0.8, 'ATGCATGCATGCATGCATGC', 45.0, 37.5904],
+    [50, 2.5, 0.8, 'ATGCATGCATGCATGCATGC', 60.0, 51.8842],
+    [50, 0.0, 0.0, 'ATGCATGCATGCATGCATGC', 45.0, 31.579],
+    [50, 0.0, 0.0, 'ATGCATGCATGCATGCATGC', 60.0, 45.3129],
+    [10, 10.0, 0.0, 'GCGCGCGCGCGCGCGCGCGCGCGCG', 45.0, 39.5615],
+    [10, 10.0, 0.0, 'GCGCGCGCGCGCGCGCGCGCGCGCG', 60.0, 54.0413],
+    [0, 2.5, 0.8, 'ATGCATGCATGCATGCATGC', 45.0, 37.9413],
+    [0, 2.5, 0.8, 'ATGCATGCATGCATGCATGC', 60.0, 52.2681],
+    [50, 1.0, 2.0, 'ATGCATGCATGCATGCATGC', 45.0, 31.579],
+    [50, 1.0, 2.0, 'ATGCATGCATGCATGCATGC', 60.0, 45.3129],
+    [200, 5.0, 0.8, 'ATATATATATATATATATATATATAT', 45.0, 38.1194],
+    [200, 5.0, 0.8, 'ATATATATATATATATATATATATAT', 60.0, 52.463],
+    [50, 0.5, 0.0, 'GCGCGCGCGCGCGCGCGCGC', 45.0, 38.4487],
+    [50, 0.5, 0.0, 'GCGCGCGCGCGCGCGCGCGC', 60.0, 52.8234],
+  ];
+
+  it('reproduces the reference 1/Tm correction (≤ 0.01 °C)', () => {
+    for (const [na, mg, dntp, seq, tmOld, expected] of GOLDENS) {
+      expect(
+        owczarzySaltTm(tmOld, na, mg, dntp, gcContent(seq) / 100, seq.length),
+      ).toBeCloseTo(expected, 2);
+    }
+  });
+
+  it('computes free Mg²⁺ via the Ka equilibrium (hand-check)', () => {
+    // No dNTPs → total returned. Mg 2.5 mM + dNTP 0.8 mM → ≈ 1.715 mM.
+    expect(freeMagnesium(2.5, 0)).toBeCloseTo(2.5e-3, 12);
+    expect(freeMagnesium(2.5, 0.8)).toBeCloseTo(1.715e-3, 6);
+    expect(freeMagnesium(0.5, 2.0)).toBeLessThan(0.5e-3);
+  });
+
+  it('rejects zero salt and degenerate lengths', () => {
+    expect(() => owczarzySaltTm(60, 0, 0, 0, 0.5, 20)).toThrow(RangeError);
+    expect(() => owczarzySaltTm(60, 50, 2.5, 0.8, 0.5, 1)).toThrow(RangeError);
   });
 });
 

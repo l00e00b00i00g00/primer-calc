@@ -10,7 +10,7 @@
 export type TempUnit = 'C' | 'F';
 
 /** Salt-correction strategy applied to the melting temperature. */
-export type SaltMethod = 'vonAhsen' | 'none';
+export type SaltMethod = 'vonAhsen' | 'owczarzy' | 'none';
 
 /** Severity level attached to an analysis warning. */
 export type WarningSeverity = 'info' | 'warning' | 'critical';
@@ -135,9 +135,11 @@ export interface PrimerAnalysis {
   deltaH: number;
   /** Cumulative duplex entropy ΔS° (cal/(mol·K)) for the perfect-match duplex. */
   deltaS: number;
-  /** Sodium-equivalent cation concentration used (mM). */
-  naEquivalent: number;
-  degeneracy: DegeneracyInfo;
+  /**
+   * Sodium-equivalent cation concentration (mM, von Ahsen). Under the
+   * Owczarzy mixed-salt model this carries the monovalent input instead.
+   */
+  naEquivalent: number;  degeneracy: DegeneracyInfo;
   hairpin: HairpinResult;
   homodimer: DimerResult;
   threePrime: ThreePrimeResult;
