@@ -89,6 +89,16 @@ describe('bestDimer', () => {
     );
   });
 
+  it('supports the Owczarzy salt correction on dimers', () => {
+    const ow = resolveConditions({ salt_method: 'owczarzy' });
+    const d = bestDimer('GCGCGCGC', 'GCGCGCGC', ow, true);
+    expect(d.found).toBe(true);
+    expect(d.deltaG as number).toBeLessThan(-9);
+    // Owczarzy divalent handling melts hotter than von Ahsen here.
+    const va = bestDimer('GCGCGCGC', 'GCGCGCGC', cond, true);
+    expect(d.tm as number).toBeGreaterThan(va.tm as number);
+  });
+
   it('bridges a single internal mismatch with one initiation', () => {
     // A·C mismatch inside an 8-bp block must still be detected, weaker
     // than the perfect block.

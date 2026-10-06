@@ -88,6 +88,17 @@ describe('TS ↔ WASM parity (dimer engine)', () => {
     expect(actual.deltaG).toBeCloseTo(expected.deltaG as number, 4);
     expect(actual.tm as number).toBeCloseTo(expected.tm as number, 4);
   });
+
+  it('honours the Owczarzy convention through WASM', async () => {
+    const ts = new TypeScriptBackend();
+    const wasm = await wasmBackend();
+    const ow = resolveConditions({ salt_method: 'owczarzy' });
+    const expected = ts.heterodimer('AAAAAAAAAAAA', 'TTTTTTTTTTTT', ow);
+    const actual = wasm.heterodimer('AAAAAAAAAAAA', 'TTTTTTTTTTTT', ow);
+    expect(actual.deltaG).toBeCloseTo(expected.deltaG as number, 9);
+    expect(actual.tm as number).toBeCloseTo(expected.tm as number, 4);
+    expect(actual.pairedBases).toBe(expected.pairedBases);
+  });
   it('returns identical DimerResults on every pair class', async () => {
     const ts = new TypeScriptBackend();
     const wasm = await wasmBackend();

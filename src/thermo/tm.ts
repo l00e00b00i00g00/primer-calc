@@ -2,12 +2,8 @@ import type { ResolvedConditions } from '../types.js';
 import { R_CAL, ZERO_C_KELVIN } from '../constants.js';
 import { gcContent } from '../sequence/gc.js';
 import { duplexThermodynamics } from './nearest-neighbor.js';
-import { tmTwoState } from './gibbs.js';
-import {
-  sodiumEquivalent,
-  saltAdjustmentCelsius,
-  owczarzySaltTm,
-} from './salt.js';
+import { tmTwoState, tmSelfComplementary } from './gibbs.js';
+import { sodiumEquivalent, saltAdjustmentCelsius, owczarzySaltTm } from './salt.js';
 
 /** Primer concentration: nM → M. */
 export function primerConcToMolar(primerConc_nM: number): number {
@@ -66,32 +62,21 @@ export function dimerMeltingTemp(
 ): number {
   const ctM = primerConcToMolar(cond.primer_conc);
   if (cond.salt_method === 'owczarzy') {
-    const concTerm = selfComplementary
-      ? R_CAL * Math.log(ctM)
-      : R_CAL * Math.log(ctM / 2);
+    const concTerm = selfComplementary ? R_CAL * Math.log(ctM) : R_CAL * Math.log(ctM / 2);
     const tm1M = (dH * 1000) / (dS + concTerm) - ZERO_C_KELVIN;
     return (
-      owczarzySaltTm(
-        tm1M,
-        cond.na_conc,
-        cond.mg_conc,
-        cond.dNTPs_conc,
-        gcFrac,
-        alnLen,
-      ) -
+      owczarzySaltTm(tm1M, cond.na_conc, cond.mg_conc, cond.dNTPs_conc, gcFrac, alnLen) -
       0.75 * cond.dmso_percent
     );
   }
   const saltAdj =
     cond.salt_method === 'vonAhsen'
-      ? saltAdjustmentCelsius(
-          sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc),
-        )
+      ? saltAdjustmentCelsius(sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc))
       : 0;
-  const concTerm = selfComplementary
-    ? R_CAL * Math.log(ctM)
-    : R_CAL * Math.log(ctM / 2);
-  let tm = (dH * 1000) / (dS + concTerm) - ZERO_C_KELVIN + saltAdj;
+  // Homo path reuses the reference two-state self-complementary formula.
+  let tm = selfComplementary
+    ? tmSelfComplementary(dH, dS, ctM, saltAdj)
+    : (dH * 1000) / (dS + R_CAL * Math.log(ctM / 2)) - ZERO_C_KELVIN + saltAdj;
   tm -= 0.75 * cond.dmso_percent;
   return tm;
 }

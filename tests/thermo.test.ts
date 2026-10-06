@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { danglingParams, nnParams } from '../src/constants.js';
+import {
+  danglingParams,
+  nnParams,
+  immParams,
+  tmmParams,
+  IMM_TABLE,
+  TMM_TABLE,
+} from '../src/constants.js';
 import { alignmentThermodynamics, duplexThermodynamics } from '../src/thermo/nearest-neighbor.js';
-import { saltAdjustmentCelsius, sodiumEquivalent, owczarzySaltTm, freeMagnesium } from '../src/thermo/salt.js';
+import {
+  saltAdjustmentCelsius,
+  sodiumEquivalent,
+  owczarzySaltTm,
+  freeMagnesium,
+} from '../src/thermo/salt.js';
 import { gcContent } from '../src/sequence/gc.js';
 import { gibbsFreeEnergy } from '../src/thermo/gibbs.js';
 import { meltingTemperature } from '../src/thermo/tm.js';
@@ -83,6 +95,57 @@ describe('alignmentThermodynamics', () => {
     expect(broken.dH).toBeGreaterThan(full.dH);
   });
 
+  it('scores a single-pair alignment with initiation only (hand-check)', () => {
+    const d = alignmentThermodynamics('A', 'T', false);
+    expect(d.dH).toBeCloseTo(0.2 + 2.2, 9);
+    expect(d.dS).toBeCloseTo(-5.7 + 6.9, 9);
+  });
+
+  it('ignores gap bases at would-be terminal-mismatch ends', () => {
+    // Gaps skip TMM handling; a lone leading/trailing gap still carries
+    // the single-nucleotide bulge penalty (+3.0 kcal/mol).
+    const left = alignmentThermodynamics('-CGC', 'AGCG', false);
+    const plain = alignmentThermodynamics('CGC', 'GCG', false);
+    expect(left.dH).toBeCloseTo(plain.dH + 3.0, 9);
+    expect(left.dS).toBeCloseTo(plain.dS, 9);
+    const right = alignmentThermodynamics('CGCA', 'GCG-', false);
+    expect(right.dH).toBeCloseTo(plain.dH + 3.0, 9);
+  });
+
+  it('breaks stacking across bottom-strand bulges', () => {
+    // Mirror of the top-strand bulge: pairs at 0, 1, 3, 4 (gap at 2).
+    const d = alignmentThermodynamics('AAGCC', 'TT-GG', false);
+    expect(d.dH).toBeCloseTo(-7.6 - 8.0 + 0.2 + 2.2 + 3.0, 9);
+  });
+
+  it('scores an isolated internal mismatch via IMM steps (hand-check)', () => {
+    // CGTA/GTAT: WC, G·T mismatch, WC, WC.
+    // IMM CG/GT (−4.1/−11.7) + IMM GT/TA≡AT/TG (−2.5/−8.3) + NN TA/AT.
+    const d = alignmentThermodynamics('CGTA', 'GTAT', false);
+    expect(d.dH).toBeCloseTo(-4.1 - 2.5 - 7.2 + 0.2 + 2.2, 9);
+    expect(d.dS).toBeCloseTo(-11.7 - 8.3 - 21.3 - 5.7 + 6.9, 9);
+    expect(d.terminalAT).toBe(1);
+    expect(d.terminalMM).toBe(0);
+  });
+
+  it('scores a terminal mismatch via TMM subsuming that end (hand-check)', () => {
+    // GCC/AGG: G·A terminal mismatch + CC/GG stacks.
+    // TMM GA/CG (−4.3/−11.1) + NN CC/GG≡GG/CC (−8.0/−19.9), no AT penalty.
+    const d = alignmentThermodynamics('GCC', 'AGG', false);
+    expect(d.dH).toBeCloseTo(-4.3 - 8.0 + 0.2, 9);
+    expect(d.dS).toBeCloseTo(-11.1 - 19.9 - 5.7, 9);
+    expect(d.terminalAT).toBe(0);
+    expect(d.terminalMM).toBe(1);
+  });
+
+  it('breaks stacking across tandem mismatches without crashing', () => {
+    // GCAAC/CAATG: pairs at 0, 3, 4 (tandem C·A/A·A at 1–2).
+    const d = alignmentThermodynamics('GCAAC', 'CAATG', false);
+    expect(d.dH).toBeCloseTo(-8.4 + 0.2, 9);
+    expect(d.dS).toBeCloseTo(-22.4 - 5.7, 9);
+    expect(d.terminalMM).toBe(0);
+  });
+
   it('rejects misaligned segment lengths', () => {
     expect(() => alignmentThermodynamics('ATGC', 'TAC', false)).toThrow();
   });
@@ -134,6 +197,8 @@ describe('alignmentThermodynamics flanks', () => {
     const d = alignmentThermodynamics('AAAA', 'AAAA', false);
     expect(d.dH).toBeCloseTo(0.2, 12);
     expect(d.dS).toBeCloseTo(-5.7, 12);
+    const sym = alignmentThermodynamics('AAAA', 'CCCC', true);
+    expect(sym.dS).toBeCloseTo(-5.7 - 1.4, 12);
   });
 
   it('breaks stacking across bulges with a fixed penalty', () => {
@@ -152,7 +217,85 @@ describe('alignmentThermodynamics flanks', () => {
   });
 });
 
-describe('salt corrections (von Ahsen 2001)', () => {  it('computes the sodium equivalent', () => {
+describe('immParams / tmmParams (Allawi/SantaLucia/Peyret/Watkins)', () => {
+  const WC = new Set(['AT', 'TA', 'GC', 'CG']);
+  const isWC = (a: string, b: string) => WC.has(a + b);
+  const rev = (s: string) => [...s].reverse().join('');
+
+  it('returns tabulated mismatch steps', () => {
+    expect(immParams('CG', 'GT')).toEqual({ dH: -4.1, dS: -11.7 });
+    expect(tmmParams('GA', 'CA')).toEqual({ dH: -8.0, dS: -22.5 });
+  });
+
+  it('resolves 180° strand symmetry', () => {
+    expect(immParams('TG', 'GC')).toEqual(immParams('CG', 'GT'));
+    expect(tmmParams('AC', 'AG')).toEqual(tmmParams('GA', 'CA'));
+  });
+
+  it('returns null outside the tables', () => {
+    expect(immParams('AT', 'TA')).toBeNull(); // pure WC: NN table owns it
+    expect(immParams('AX', 'TT')).toBeNull();
+    expect(tmmParams('AX', 'TT')).toBeNull();
+  });
+
+  it('is COMPLETE for every isolated single internal mismatch', () => {
+    // Locks the totality invariant relied upon by alignmentThermodynamics.
+    const bases = ['A', 'C', 'G', 'T'];
+    let checked = 0;
+    for (const t of bases)
+      for (const b of bases) {
+        if (isWC(t, b)) continue;
+        for (const l of bases)
+          for (const r of bases) {
+            // mismatch with WC on the left: steps (l,t)/(?,b)
+            for (const lb of bases) {
+              if (!isWC(l, lb)) continue;
+              const key = `${l}${t}/${lb}${b}`;
+              expect(
+                immParams(l + t, lb + b) ?? immParams(rev(lb + b), rev(l + t)),
+                key,
+              ).not.toBeNull();
+              checked++;
+            }
+            // mismatch with WC on the right: steps (t,r)/(b,?)
+            for (const rb of bases) {
+              if (!isWC(r, rb)) continue;
+              const key = `${t}${r}/${b}${rb}`;
+              expect(
+                immParams(t + r, b + rb) ?? immParams(rev(b + rb), rev(t + r)),
+                key,
+              ).not.toBeNull();
+              checked++;
+            }
+          }
+      }
+    expect(checked).toBeGreaterThan(100);
+  });
+
+  it('is COMPLETE for every terminal-mismatch end configuration', () => {
+    const bases = ['A', 'C', 'G', 'T'];
+    let checked = 0;
+    for (const m of bases)
+      for (const mb of bases) {
+        if (isWC(m, mb)) continue; // terminal pair must mismatch
+        for (const p of bases)
+          for (const pb of bases) {
+            if (!isWC(p, pb)) continue; // inner pair must be WC
+            const left = `${m}${p}/${mb}${pb}`;
+            const right = `${p}${m}/${pb}${mb}`;
+            for (const key of [left, right]) {
+              const [t, b] = key.split('/') as [string, string];
+              expect(tmmParams(t, b), key).not.toBeNull();
+              checked++;
+            }
+          }
+      }
+    expect(checked).toBe(96); // 12 terminal mismatches × 4 WC inners × 2 ends
+  });
+});
+
+describe('salt corrections (von Ahsen 2001)', () => {
+  it('computes the sodium equivalent', () => {
     // 50 + 120·√(2.5 − 0.8) = 50 + 120·√1.7 ≈ 206.46 mM
     expect(sodiumEquivalent(50, 2.5, 0.8)).toBeCloseTo(206.46, 2);
   });
@@ -189,9 +332,10 @@ describe('Owczarzy salt correction (2004/2008, via Biopython goldens)', () => {
 
   it('reproduces the reference 1/Tm correction (≤ 0.01 °C)', () => {
     for (const [na, mg, dntp, seq, tmOld, expected] of GOLDENS) {
-      expect(
-        owczarzySaltTm(tmOld, na, mg, dntp, gcContent(seq) / 100, seq.length),
-      ).toBeCloseTo(expected, 2);
+      expect(owczarzySaltTm(tmOld, na, mg, dntp, gcContent(seq) / 100, seq.length)).toBeCloseTo(
+        expected,
+        2,
+      );
     }
   });
 

@@ -140,6 +140,159 @@ export const DEFAULT_CONDITIONS = {
 } as const;
 
 /**
+ * Internal single-mismatch NN parameters (dH kcal/mol, dS cal/(mol·K)),
+ * Allawi & SantaLucia (1997, 1998), Peyret et al. (1999),
+ * Watkins & SantaLucia (2005), via Biopython DNA_IMM1 (inosine rows omitted).
+ * Keys use the NN orientation (top 5′→3′ / bottom 3′→5′); each entry covers
+ * one NN step containing exactly one mismatch. The set is COMPLETE for
+ * isolated single mismatches (verified: every such step resolves directly
+ * or via 180° strand symmetry) — see tests/thermo.test.ts.
+ */
+export const IMM_TABLE: Record<string, readonly [number, number]> = {
+  'AA/TA': [1.2, 1.7],
+  'AA/TC': [2.3, 4.6],
+  'AA/TG': [-0.6, -2.3],
+  'AC/TA': [5.3, 14.6],
+  'AC/TC': [0.0, -4.4],
+  'AC/TT': [0.7, 0.2],
+  'AG/TA': [-0.7, -2.3],
+  'AG/TG': [-3.1, -9.5],
+  'AG/TT': [1.0, 0.9],
+  'AT/TC': [-1.2, -6.2],
+  'AT/TG': [-2.5, -8.3],
+  'AT/TT': [-2.7, -10.8],
+  'CA/GA': [-0.9, -4.2],
+  'CA/GC': [1.9, 3.7],
+  'CA/GG': [-0.7, -2.3],
+  'CC/GA': [0.6, -0.6],
+  'CC/GC': [-1.5, -7.2],
+  'CC/GT': [-0.8, -4.5],
+  'CG/GA': [-4.0, -13.2],
+  'CG/GG': [-4.9, -15.3],
+  'CG/GT': [-4.1, -11.7],
+  'CT/GC': [-1.5, -6.1],
+  'CT/GG': [-2.8, -8.0],
+  'CT/GT': [-5.0, -15.8],
+  'GA/CA': [-2.9, -9.8],
+  'GA/CC': [5.2, 14.2],
+  'GA/CG': [-0.6, -1.0],
+  'GC/CA': [-0.7, -3.8],
+  'GC/CC': [3.6, 8.9],
+  'GC/CT': [2.3, 5.4],
+  'GG/CA': [0.5, 3.2],
+  'GG/CG': [-6.0, -15.8],
+  'GG/CT': [3.3, 10.4],
+  'GG/TT': [5.8, 16.3],
+  'GT/CC': [5.2, 13.5],
+  'GT/CG': [-4.4, -12.3],
+  'GT/CT': [-2.2, -8.4],
+  'GT/TG': [4.1, 9.5],
+  'TA/AA': [4.7, 12.9],
+  'TA/AC': [3.4, 8.0],
+  'TA/AG': [0.7, 0.7],
+  'TC/AA': [7.6, 20.2],
+  'TC/AC': [6.1, 16.4],
+  'TC/AT': [1.2, 0.7],
+  'TG/AA': [3.0, 7.4],
+  'TG/AG': [1.6, 3.6],
+  'TG/AT': [-0.1, -1.7],
+  'TG/GT': [-1.4, -6.2],
+  'TT/AC': [1.0, 0.7],
+  'TT/AG': [-1.3, -5.3],
+  'TT/AT': [0.2, -1.5],
+};
+
+/**
+ * Terminal-mismatch NN parameters (dH, dS), SantaLucia & Peyret (2001),
+ * via Biopython DNA_TMM1. Each entry covers a terminal mismatch plus its
+ * adjacent Watson–Crick pair as a unit, subsuming that end's terminal
+ * corrections. COMPLETE for all (terminal-mismatch × inner-WC)
+ * configurations, directly or via symmetry — see tests/thermo.test.ts.
+ */
+export const TMM_TABLE: Record<string, readonly [number, number]> = {
+  'AA/TA': [-3.1, -7.8],
+  'AA/TC': [-1.6, -4.0],
+  'AA/TG': [-1.9, -4.4],
+  'AC/TA': [-1.8, -3.8],
+  'AC/TC': [-0.1, 0.5],
+  'AC/TT': [-0.9, -1.7],
+  'AG/TA': [-2.5, -5.9],
+  'AG/TG': [-1.1, -2.1],
+  'AG/TT': [-3.2, -8.7],
+  'AT/TC': [-2.3, -6.3],
+  'AT/TG': [-3.5, -9.4],
+  'AT/TT': [-2.4, -6.5],
+  'CA/GA': [-4.3, -10.7],
+  'CA/GC': [-2.6, -5.9],
+  'CA/GG': [-3.9, -9.6],
+  'CC/GA': [-2.7, -6.0],
+  'CC/GC': [-2.1, -5.1],
+  'CC/GT': [-3.2, -8.0],
+  'CG/GA': [-6.0, -15.5],
+  'CG/GG': [-3.8, -9.5],
+  'CG/GT': [-3.8, -9.0],
+  'CT/GC': [-3.9, -10.6],
+  'CT/GG': [-6.6, -18.7],
+  'CT/GT': [-6.1, -16.9],
+  'GA/CA': [-8.0, -22.5],
+  'GA/CC': [-5.0, -13.8],
+  'GA/CG': [-4.3, -11.1],
+  'GC/CA': [-3.2, -7.1],
+  'GC/CC': [-3.9, -10.6],
+  'GC/CT': [-4.9, -13.5],
+  'GG/CA': [-4.6, -11.4],
+  'GG/CG': [-0.7, -19.2],
+  'GG/CT': [-5.7, -15.9],
+  'GT/CC': [-3.0, -7.8],
+  'GT/CG': [-5.9, -16.1],
+  'GT/CT': [-7.4, -21.2],
+  'TA/AA': [-2.5, -6.3],
+  'TA/AC': [-2.3, -5.9],
+  'TA/AG': [-2.0, -4.7],
+  'TC/AA': [-2.7, -7.0],
+  'TC/AC': [-0.7, -1.3],
+  'TC/AT': [-2.5, -6.3],
+  'TG/AA': [-2.4, -5.8],
+  'TG/AG': [-1.1, -2.7],
+  'TG/AT': [-3.9, -10.5],
+  'TT/AC': [-0.7, -1.2],
+  'TT/AG': [-3.6, -9.8],
+  'TT/AT': [-3.2, -8.9],
+};
+
+/** Internal-mismatch NN lookup (direct + 180° symmetry), else null. */
+export function immParams(top5: string, bottom3: string): { dH: number; dS: number } | null {
+  const t = top5.toUpperCase();
+  const b = bottom3.toUpperCase();
+  const direct = IMM_TABLE[`${t}/${b}`];
+  if (direct !== undefined) {
+    return { dH: direct[0], dS: direct[1] };
+  }
+  const rev = (s: string) => s.split('').reverse().join('');
+  const swapped = IMM_TABLE[`${rev(b)}/${rev(t)}`];
+  if (swapped !== undefined) {
+    return { dH: swapped[0], dS: swapped[1] };
+  }
+  return null;
+}
+
+/** Terminal-mismatch NN lookup (direct + 180° symmetry), else null. */
+export function tmmParams(top5: string, bottom3: string): { dH: number; dS: number } | null {
+  const t = top5.toUpperCase();
+  const b = bottom3.toUpperCase();
+  const direct = TMM_TABLE[`${t}/${b}`];
+  if (direct !== undefined) {
+    return { dH: direct[0], dS: direct[1] };
+  }
+  const rev = (s: string) => s.split('').reverse().join('');
+  const swapped = TMM_TABLE[`${rev(b)}/${rev(t)}`];
+  if (swapped !== undefined) {
+    return { dH: swapped[0], dS: swapped[1] };
+  }
+  return null;
+}
+
+/**
  * Owczarzy et al. (2008) divalent-salt empirical constants, via Biopython's
  * verified implementation (Biochemistry 47:5336–5353). `KA` is the Mg:dNTP
  * dissociation constant (M⁻¹) for the free-Mg²⁺ equilibrium.

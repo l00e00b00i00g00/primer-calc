@@ -152,19 +152,11 @@ export class WasmBackend implements ComputeBackend {
     // salt strategy (including Owczarzy, which needs the traced duplex
     // composition) behaves identically on both backends. The Rust-side tm
     // stays available for direct module consumers.
-    const gc =
-      typeof report.gc === 'number' ? report.gc : gcContent(a) / 100;
+    const gc = typeof report.gc === 'number' ? report.gc : gcContent(a) / 100;
     const n = typeof report.n === 'number' ? report.n : a.length;
     const tm =
       typeof report.dh === 'number' && typeof report.ds === 'number'
-        ? dimerMeltingTemp(
-            report.dh,
-            report.ds,
-            cond,
-            selfComplementary,
-            gc,
-            n,
-          )
+        ? dimerMeltingTemp(report.dh, report.ds, cond, selfComplementary, gc, n)
         : (report.tm as number);
     return {
       found: true,

@@ -53,7 +53,141 @@ fn nn_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
     None
 }
 
-/// Single-nucleotide dangling end → (dH, dS).
+/// Internal single-mismatch NN steps (dH, dS): Allawi & SantaLucia
+/// (1997, 1998), Peyret et al. (1999), Watkins & SantaLucia (2005).
+/// Complete for isolated single mismatches (direct or 180° rotation).
+fn imm_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
+    const TABLE: [((u8, u8, u8, u8), (f64, f64)); 51] = [
+        ((b'A', b'A', b'T', b'A'), (1.2, 1.7)),
+        ((b'A', b'A', b'T', b'C'), (2.3, 4.6)),
+        ((b'A', b'A', b'T', b'G'), (-0.6, -2.3)),
+        ((b'A', b'C', b'T', b'A'), (5.3, 14.6)),
+        ((b'A', b'C', b'T', b'C'), (0.0, -4.4)),
+        ((b'A', b'C', b'T', b'T'), (0.7, 0.2)),
+        ((b'A', b'G', b'T', b'A'), (-0.7, -2.3)),
+        ((b'A', b'G', b'T', b'G'), (-3.1, -9.5)),
+        ((b'A', b'G', b'T', b'T'), (1.0, 0.9)),
+        ((b'A', b'T', b'T', b'C'), (-1.2, -6.2)),
+        ((b'A', b'T', b'T', b'G'), (-2.5, -8.3)),
+        ((b'A', b'T', b'T', b'T'), (-2.7, -10.8)),
+        ((b'C', b'A', b'G', b'A'), (-0.9, -4.2)),
+        ((b'C', b'A', b'G', b'C'), (1.9, 3.7)),
+        ((b'C', b'A', b'G', b'G'), (-0.7, -2.3)),
+        ((b'C', b'C', b'G', b'A'), (0.6, -0.6)),
+        ((b'C', b'C', b'G', b'C'), (-1.5, -7.2)),
+        ((b'C', b'C', b'G', b'T'), (-0.8, -4.5)),
+        ((b'C', b'G', b'G', b'A'), (-4.0, -13.2)),
+        ((b'C', b'G', b'G', b'G'), (-4.9, -15.3)),
+        ((b'C', b'G', b'G', b'T'), (-4.1, -11.7)),
+        ((b'C', b'T', b'G', b'C'), (-1.5, -6.1)),
+        ((b'C', b'T', b'G', b'G'), (-2.8, -8.0)),
+        ((b'C', b'T', b'G', b'T'), (-5.0, -15.8)),
+        ((b'G', b'A', b'C', b'A'), (-2.9, -9.8)),
+        ((b'G', b'A', b'C', b'C'), (5.2, 14.2)),
+        ((b'G', b'A', b'C', b'G'), (-0.6, -1.0)),
+        ((b'G', b'C', b'C', b'A'), (-0.7, -3.8)),
+        ((b'G', b'C', b'C', b'C'), (3.6, 8.9)),
+        ((b'G', b'C', b'C', b'T'), (2.3, 5.4)),
+        ((b'G', b'G', b'C', b'A'), (0.5, 3.2)),
+        ((b'G', b'G', b'C', b'G'), (-6.0, -15.8)),
+        ((b'G', b'G', b'C', b'T'), (3.3, 10.4)),
+        ((b'G', b'G', b'T', b'T'), (5.8, 16.3)),
+        ((b'G', b'T', b'C', b'C'), (5.2, 13.5)),
+        ((b'G', b'T', b'C', b'G'), (-4.4, -12.3)),
+        ((b'G', b'T', b'C', b'T'), (-2.2, -8.4)),
+        ((b'G', b'T', b'T', b'G'), (4.1, 9.5)),
+        ((b'T', b'A', b'A', b'A'), (4.7, 12.9)),
+        ((b'T', b'A', b'A', b'C'), (3.4, 8.0)),
+        ((b'T', b'A', b'A', b'G'), (0.7, 0.7)),
+        ((b'T', b'C', b'A', b'A'), (7.6, 20.2)),
+        ((b'T', b'C', b'A', b'C'), (6.1, 16.4)),
+        ((b'T', b'C', b'A', b'T'), (1.2, 0.7)),
+        ((b'T', b'G', b'A', b'A'), (3.0, 7.4)),
+        ((b'T', b'G', b'A', b'G'), (1.6, 3.6)),
+        ((b'T', b'G', b'A', b'T'), (-0.1, -1.7)),
+        ((b'T', b'G', b'G', b'T'), (-1.4, -6.2)),
+        ((b'T', b'T', b'A', b'C'), (1.0, 0.7)),
+        ((b'T', b'T', b'A', b'G'), (-1.3, -5.3)),
+        ((b'T', b'T', b'A', b'T'), (0.2, -1.5)),
+    ];
+    lookup_nn(&TABLE, t0, t1, b0, b1)
+}
+
+/// Terminal-mismatch NN units (dH, dS): SantaLucia & Peyret (2001).
+/// Each covers a terminal mismatch plus its adjacent WC pair, subsuming
+/// that end's terminal corrections. Complete for all such ends.
+fn tmm_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
+    const TABLE: [((u8, u8, u8, u8), (f64, f64)); 48] = [
+        ((b'A', b'A', b'T', b'A'), (-3.1, -7.8)),
+        ((b'A', b'A', b'T', b'C'), (-1.6, -4.0)),
+        ((b'A', b'A', b'T', b'G'), (-1.9, -4.4)),
+        ((b'A', b'C', b'T', b'A'), (-1.8, -3.8)),
+        ((b'A', b'C', b'T', b'C'), (-0.1, 0.5)),
+        ((b'A', b'C', b'T', b'T'), (-0.9, -1.7)),
+        ((b'A', b'G', b'T', b'A'), (-2.5, -5.9)),
+        ((b'A', b'G', b'T', b'G'), (-1.1, -2.1)),
+        ((b'A', b'G', b'T', b'T'), (-3.2, -8.7)),
+        ((b'A', b'T', b'T', b'C'), (-2.3, -6.3)),
+        ((b'A', b'T', b'T', b'G'), (-3.5, -9.4)),
+        ((b'A', b'T', b'T', b'T'), (-2.4, -6.5)),
+        ((b'C', b'A', b'G', b'A'), (-4.3, -10.7)),
+        ((b'C', b'A', b'G', b'C'), (-2.6, -5.9)),
+        ((b'C', b'A', b'G', b'G'), (-3.9, -9.6)),
+        ((b'C', b'C', b'G', b'A'), (-2.7, -6.0)),
+        ((b'C', b'C', b'G', b'C'), (-2.1, -5.1)),
+        ((b'C', b'C', b'G', b'T'), (-3.2, -8.0)),
+        ((b'C', b'G', b'G', b'A'), (-6.0, -15.5)),
+        ((b'C', b'G', b'G', b'G'), (-3.8, -9.5)),
+        ((b'C', b'G', b'G', b'T'), (-3.8, -9.0)),
+        ((b'C', b'T', b'G', b'C'), (-3.9, -10.6)),
+        ((b'C', b'T', b'G', b'G'), (-6.6, -18.7)),
+        ((b'C', b'T', b'G', b'T'), (-6.1, -16.9)),
+        ((b'G', b'A', b'C', b'A'), (-8.0, -22.5)),
+        ((b'G', b'A', b'C', b'C'), (-5.0, -13.8)),
+        ((b'G', b'A', b'C', b'G'), (-4.3, -11.1)),
+        ((b'G', b'C', b'C', b'A'), (-3.2, -7.1)),
+        ((b'G', b'C', b'C', b'C'), (-3.9, -10.6)),
+        ((b'G', b'C', b'C', b'T'), (-4.9, -13.5)),
+        ((b'G', b'G', b'C', b'A'), (-4.6, -11.4)),
+        ((b'G', b'G', b'C', b'G'), (-0.7, -19.2)),
+        ((b'G', b'G', b'C', b'T'), (-5.7, -15.9)),
+        ((b'G', b'T', b'C', b'C'), (-3.0, -7.8)),
+        ((b'G', b'T', b'C', b'G'), (-5.9, -16.1)),
+        ((b'G', b'T', b'C', b'T'), (-7.4, -21.2)),
+        ((b'T', b'A', b'A', b'A'), (-2.5, -6.3)),
+        ((b'T', b'A', b'A', b'C'), (-2.3, -5.9)),
+        ((b'T', b'A', b'A', b'G'), (-2.0, -4.7)),
+        ((b'T', b'C', b'A', b'A'), (-2.7, -7.0)),
+        ((b'T', b'C', b'A', b'C'), (-0.7, -1.3)),
+        ((b'T', b'C', b'A', b'T'), (-2.5, -6.3)),
+        ((b'T', b'G', b'A', b'A'), (-2.4, -5.8)),
+        ((b'T', b'G', b'A', b'G'), (-1.1, -2.7)),
+        ((b'T', b'G', b'A', b'T'), (-3.9, -10.5)),
+        ((b'T', b'T', b'A', b'C'), (-0.7, -1.2)),
+        ((b'T', b'T', b'A', b'G'), (-3.6, -9.8)),
+        ((b'T', b'T', b'A', b'T'), (-3.2, -8.9)),
+    ];
+    lookup_nn(&TABLE, t0, t1, b0, b1)
+}
+
+/// Shared direct + 180°-rotation lookup over an NN-style table.
+fn lookup_nn(
+    table: &[((u8, u8, u8, u8), (f64, f64))],
+    t0: u8,
+    t1: u8,
+    b0: u8,
+    b1: u8,
+) -> Option<(f64, f64)> {
+    for ((a, b, c, d), v) in table {
+        if (*a, *b, *c, *d) == (t0, t1, b0, b1) {
+            return Some(*v);
+        }
+        if (*d, *c, *b, *a) == (t0, t1, b0, b1) {
+            return Some(*v);
+        }
+    }
+    None
+}
 /// `five_prime`: overhang side; `same`/`opp`: closing-pair bases on the
 /// dangling strand / opposite strand; `d`: the unpaired base.
 fn dangle_params(five_prime: bool, same: u8, opp: u8, d: u8) -> Option<(f64, f64)> {
@@ -157,11 +291,47 @@ fn score_alignment(
     let mut ds = -5.7_f64;
     let first = paired[0];
     let last = paired[paired.len() - 1];
+    // Terminal mismatches (SantaLucia & Peyret 2001): a facing non-WC pair
+    // just outside the paired span scores as a unit subsuming that end.
+    // Total per the test-locked completeness invariant (see TS engine).
+    let mut left_tmm = false;
+    let mut right_tmm = false;
+    if first > 0 && !is_wc(top[first - 1], bot[first - 1]) {
+        if let Some((h, s)) = tmm_params(
+            top[first - 1],
+            top[first],
+            bot[first - 1],
+            bot[first],
+        ) {
+            dh += h;
+            ds += s;
+            left_tmm = true;
+        }
+    }
+    if last + 1 < top.len() && !is_wc(top[last + 1], bot[last + 1]) {
+        if let Some((h, s)) = tmm_params(
+            top[last],
+            top[last + 1],
+            bot[last],
+            bot[last + 1],
+        ) {
+            dh += h;
+            ds += s;
+            right_tmm = true;
+        }
+    }
     // Bit-identical accumulation order with the TypeScript engine
     // (single scaled terminal correction, stacks in 5′→3′ order).
     let mut terminal_at = 0u32;
-    for &e in &[first, last] {
-        if top[e] == b'A' || top[e] == b'T' {
+    if first == last {
+        if !(left_tmm || right_tmm) && (top[first] == b'A' || top[first] == b'T') {
+            terminal_at += 1;
+        }
+    } else {
+        if !left_tmm && (top[first] == b'A' || top[first] == b'T') {
+            terminal_at += 1;
+        }
+        if !right_tmm && (top[last] == b'A' || top[last] == b'T') {
             terminal_at += 1;
         }
     }
@@ -171,6 +341,18 @@ fn score_alignment(
                 dh += h;
                 ds += s;
             }
+        } else if w[1] == w[0] + 2 {
+            // Isolated single internal mismatch: left + right IMM steps.
+            let m = w[0] + 1;
+            if !is_wc(top[m], bot[m]) {
+                if let (Some((h1, s1)), Some((h2, s2))) = (
+                    imm_params(top[w[0]], top[m], bot[w[0]], bot[m]),
+                    imm_params(top[m], top[w[1]], bot[m], bot[w[1]]),
+                ) {
+                    dh += h1 + h2;
+                    ds += s1 + s2;
+                }
+            }
         }
     }
     dh += 2.2 * terminal_at as f64;
@@ -179,12 +361,15 @@ fn score_alignment(
     let u5 = bot[first];
     let t3 = top[last];
     let u3 = bot[last];
-    for (five, same, opp, base) in [
-        (true, t5, u5, fl.top5),
-        (false, u5, t5, fl.bottom3),
-        (false, t3, u3, fl.top3),
-        (true, u3, t3, fl.bottom5),
+    for (five, same, opp, base, tmm_end) in [
+        (true, t5, u5, fl.top5, left_tmm),
+        (false, u5, t5, fl.bottom3, left_tmm),
+        (false, t3, u3, fl.top3, right_tmm),
+        (true, u3, t3, fl.bottom5, right_tmm),
     ] {
+        if tmm_end {
+            continue;
+        }
         if let Some(b) = base {
             if let Some((h, s)) = dangle_params(five, same, opp, b) {
                 dh += h;
@@ -298,6 +483,47 @@ fn scan(
         }
     };
 
+    // Scores a block plus its terminal-mismatch extensions (≤ 1 per end).
+    // Blocks are maximal, so in-range facing bases just outside are always
+    // mismatched and eligible for SantaLucia–Peyret TMM units.
+    let extend = |top: &[u8],
+                  bot: &[u8],
+                  a_start: usize,
+                  b_start: usize,
+                  best: &mut Option<Best>| {
+        consider(top, bot, a_start, b_start, best);
+        let len = top.len();
+        let can_left = a_start > 0 && b_start > 0;
+        let can_right = a_start + len < a.len() && b_start + len < brev.len();
+        if can_left {
+            let mut t = Vec::with_capacity(len + 1);
+            t.push(a[a_start - 1]);
+            t.extend_from_slice(top);
+            let mut u = Vec::with_capacity(len + 1);
+            u.push(brev[b_start - 1]);
+            u.extend_from_slice(bot);
+            consider(&t, &u, a_start - 1, b_start - 1, best);
+        }
+        if can_right {
+            let mut t = Vec::from(top);
+            t.push(a[a_start + len]);
+            let mut u = Vec::from(bot);
+            u.push(brev[b_start + len]);
+            consider(&t, &u, a_start, b_start, best);
+        }
+        if can_left && can_right {
+            let mut t = Vec::with_capacity(len + 2);
+            t.push(a[a_start - 1]);
+            t.extend_from_slice(top);
+            t.push(a[a_start + len]);
+            let mut u = Vec::with_capacity(len + 2);
+            u.push(brev[b_start - 1]);
+            u.extend_from_slice(bot);
+            u.push(brev[b_start + len]);
+            consider(&t, &u, a_start - 1, b_start - 1, best);
+        }
+    };
+
     let alo = 0isize - (brev.len() as isize - 1);
     let ahi = a.len() as isize - 1;
     for d in alo..=ahi {
@@ -325,7 +551,7 @@ fn scan(
             k = k2 + 1;
         }
         for &(i0, j0, len) in &blocks {
-            consider(&a[i0..i0 + len], &brev[j0..j0 + len], i0, j0, &mut best);
+            extend(&a[i0..i0 + len], &brev[j0..j0 + len], i0, j0, &mut best);
         }
         for w in blocks.windows(2) {
             let (li, lj, llen) = w[0];
@@ -337,7 +563,7 @@ fn scan(
                 let mut bot = Vec::from(&brev[lj..lj + llen]);
                 bot.push(brev[lj + llen]);
                 bot.extend_from_slice(&brev[rj..rj + w[1].2]);
-                consider(&top, &bot, li, lj, &mut best);
+                extend(&top, &bot, li, lj, &mut best);
             }
         }
     }

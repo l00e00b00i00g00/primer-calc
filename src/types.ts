@@ -139,7 +139,8 @@ export interface PrimerAnalysis {
    * Sodium-equivalent cation concentration (mM, von Ahsen). Under the
    * Owczarzy mixed-salt model this carries the monovalent input instead.
    */
-  naEquivalent: number;  degeneracy: DegeneracyInfo;
+  naEquivalent: number;
+  degeneracy: DegeneracyInfo;
   hairpin: HairpinResult;
   homodimer: DimerResult;
   threePrime: ThreePrimeResult;

@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   goldens probe. New exports: `owczarzySaltTm`, `freeMagnesium`,
   `dimerMeltingTemp`, `OWCZARZY_2008`; WASM reports carry `dh/ds/gc/n` so the
   WASM backend shares the exact TypeScript Tm path.
+- Internal single mismatches (Allawi/SantaLucia/Peyret/Watkins IMM steps,
+  completeness test-locked) and terminal mismatches (SantaLucia & Peyret 2001
+  TMM units subsuming that end): dimer blocks extend by ≤ 1 terminal mismatch
+  per end. New exports: `IMM_TABLE`, `TMM_TABLE`, `immParams`, `tmmParams`;
+  `DuplexThermo` gains `terminalMM`. Mismatched dimers are scored, never
+  silently broken.
 
 ## [0.1.0] - 2026-10-06
 

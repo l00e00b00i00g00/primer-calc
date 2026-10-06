@@ -69,15 +69,14 @@ describe('Primer3 cross-validation (frozen goldens)', () => {
     // strictly improve on von Ahsen for every probe (frozen FULL_ORDER goldens).
     for (const [seq, expected] of Object.entries(G.full_tm)) {
       const dva = Math.abs(calculateTm(seq) - expected);
-      const dow = Math.abs(
-        calculateTm(seq, { salt_method: 'owczarzy' }) - expected,
-      );
+      const dow = Math.abs(calculateTm(seq, { salt_method: 'owczarzy' }) - expected);
       expect(dow).toBeLessThan(dva);
       expect(dow).toBeLessThanOrEqual(2.5);
     }
   });
 
-  it('ranks primers identically to Primer3 under PCR conditions', () => {    const entries = Object.entries(G.full_tm);
+  it('ranks primers identically to Primer3 under PCR conditions', () => {
+    const entries = Object.entries(G.full_tm);
     const ours = entries.map(([seq]) => [seq, calculateTm(seq)] as [string, number]);
     for (let i = 0; i < entries.length; i++) {
       for (let j = i + 1; j < entries.length; j++) {

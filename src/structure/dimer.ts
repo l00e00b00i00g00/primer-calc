@@ -52,7 +52,7 @@ export function bestDimer(
   );
 
   let best: DimerResult = none;
-  const consider = (top: string, bottom: string, aStart: number, bStartRev: number) => {
+  const scoreOne = (top: string, bottom: string, aStart: number, bStartRev: number) => {
     const paired = countPaired(top, bottom);
     if (paired < 2) return;
     const len = top.length;
@@ -90,18 +90,47 @@ export function bestDimer(
       best = {
         found: true,
         deltaG: dG,
-        tm: dimerMeltingTemp(
-          dH,
-          dS,
-          cond,
-          selfComplementary,
-          gcPaired / len,
-          len,
-        ),
+        tm: dimerMeltingTemp(dH, dS, cond, selfComplementary, gcPaired / len, len),
         pairedBases: paired,
         threePrimeRun: run,
         threePrimeAnchored: anchored,
       };
+    }
+  };
+
+  /**
+   * Scores a block plus its terminal-mismatch extensions (≤ 1 per end).
+   * Blocks are maximal, so in-range facing bases just outside are always
+   * mismatched and eligible for SantaLucia–Peyret TMM units.
+   */
+  const consider = (top: string, bottom: string, aStart: number, bStartRev: number) => {
+    scoreOne(top, bottom, aStart, bStartRev);
+    const len = top.length;
+    const canLeft = aStart > 0 && bStartRev > 0;
+    const canRight = aStart + len < A.length && bStartRev + len < brev.length;
+    if (canLeft) {
+      scoreOne(
+        (A[aStart - 1] as string) + top,
+        (brev[bStartRev - 1] as string) + bottom,
+        aStart - 1,
+        bStartRev - 1,
+      );
+    }
+    if (canRight) {
+      scoreOne(
+        top + (A[aStart + len] as string),
+        bottom + (brev[bStartRev + len] as string),
+        aStart,
+        bStartRev,
+      );
+    }
+    if (canLeft && canRight) {
+      scoreOne(
+        (A[aStart - 1] as string) + top + (A[aStart + len] as string),
+        (brev[bStartRev - 1] as string) + bottom + (brev[bStartRev + len] as string),
+        aStart - 1,
+        bStartRev - 1,
+      );
     }
   };
 

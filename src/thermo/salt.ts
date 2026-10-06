@@ -36,18 +36,14 @@ export function freeMagnesium(mgConc_mM: number, dntpsConc_mM: number): number {
   const dntps = dntpsConc_mM * 1e-3;
   const ka = OWCZARZY_2008.KA;
   return (
-    (-(ka * dntps - ka * mg + 1) +
-      Math.sqrt((ka * dntps - ka * mg + 1) ** 2 + 4 * ka * mg)) /
+    (-(ka * dntps - ka * mg + 1) + Math.sqrt((ka * dntps - ka * mg + 1) ** 2 + 4 * ka * mg)) /
     (2 * ka)
   );
 }
 
 /** Owczarzy et al. (2004) monovalent 1/Tm correction (1/K). */
 function owczarzyMonoCorr(monM: number, gcFrac: number): number {
-  return (
-    (4.29 * gcFrac - 3.95) * 1e-5 * Math.log(monM) +
-    9.4e-6 * Math.log(monM) ** 2
-  );
+  return (4.29 * gcFrac - 3.95) * 1e-5 * Math.log(monM) + 9.4e-6 * Math.log(monM) ** 2;
 }
 
 /**
@@ -81,19 +77,14 @@ export function owczarzySaltTm(
     let { a, b, c, d, e, f, g } = OWCZARZY_2008;
     if (r < 6.0) {
       a = 3.92 * (0.843 - 0.352 * Math.sqrt(mon) * Math.log(mon));
-      d =
-        1.42 *
-        (1.279 - 4.03e-3 * Math.log(mon) - 8.03e-3 * Math.log(mon) ** 2);
-      g =
-        8.31 *
-        (0.486 - 0.258 * Math.log(mon) + 5.25e-3 * Math.log(mon) ** 3);
+      d = 1.42 * (1.279 - 4.03e-3 * Math.log(mon) - 8.03e-3 * Math.log(mon) ** 2);
+      g = 8.31 * (0.486 - 0.258 * Math.log(mon) + 5.25e-3 * Math.log(mon) ** 3);
     }
     const corr =
       (a +
         b * Math.log(mg) +
         gcFrac * (c + d * Math.log(mg)) +
-        (1 / (2 * (length - 1))) *
-          (e + f * Math.log(mg) + g * Math.log(mg) ** 2)) *
+        (1 / (2 * (length - 1))) * (e + f * Math.log(mg) + g * Math.log(mg) ** 2)) *
       1e-5;
     return 1 / (1 / tmK + corr) - ZERO_C_KELVIN;
   }
@@ -107,8 +98,7 @@ export function owczarzySaltTm(
     (a +
       b * Math.log(mg) +
       gcFrac * (c + d * Math.log(mg)) +
-      (1 / (2 * (length - 1))) *
-        (e + f * Math.log(mg) + g * Math.log(mg) ** 2)) *
+      (1 / (2 * (length - 1))) * (e + f * Math.log(mg) + g * Math.log(mg) ** 2)) *
     1e-5;
   return 1 / (1 / tmK + corr) - ZERO_C_KELVIN;
 }
