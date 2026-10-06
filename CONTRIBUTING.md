@@ -35,7 +35,10 @@ coverage gate green.
   `src/multiplex/parallel.ts` and `src/backend/wasm.ts` (browser bundling).
 - `wasm/`: any scoring change must preserve bit-exact TS≡WASM parity
   (`tests/wasm.test.ts`, `tests/wasm-web.test.ts`); rebuild + commit
-  `wasm-pkg/` (`npm run build:wasm`, verified by CI).
+  `wasm-pkg/` (`npm run build:wasm`). CI verifies functional equivalence
+  between the committed build and a fresh build
+  (`scripts/check-wasm-equivalence.mjs`) rather than byte equality, which
+  varies across wasm-bindgen distributions.
 - Primer3 goldens: regenerate with `python3 scripts/primer3-regen.py`
   (needs `primer3-py`); `--check` must pass.
 

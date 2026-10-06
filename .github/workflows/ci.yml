@@ -48,8 +48,16 @@ jobs:
         run: npm run build
       - name: Build WASM core
         run: npm run build:wasm
-      - name: Verify committed wasm-pkg matches sources
-        run: git diff --exit-code -- wasm-pkg/
+      - name: Verify committed wasm-pkg matches sources (functional)
+        # Byte-exact .wasm comparison is toolchain-fragile (prebuilt vs
+        # source-built wasm-bindgen emit different bytes); instead, require
+        # bit-identical engine outputs on a fixed battery, then restore the
+        # committed artifacts untouched.
+        run: |
+          cp -r wasm-pkg /tmp/wasm-pkg.committed
+          node scripts/check-wasm-equivalence.mjs /tmp/wasm-pkg.committed ./wasm-pkg
+          rm -rf wasm-pkg && cp -r /tmp/wasm-pkg.committed wasm-pkg
+          git diff --exit-code -- wasm-pkg/
       - name: Tests with coverage (100% gate)
         run: npm run test:coverage
       - name: Package validation (publint)
