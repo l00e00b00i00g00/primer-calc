@@ -25,15 +25,25 @@ jobs:
       - name: Modern npm (OIDC support)
         run: npm install -g npm@latest
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+        # wasm/rust-toolchain.toml pins the exact channel (reproducible builds).
       - name: Install wasm-bindgen CLI
-        run: cargo install wasm-bindgen-cli --locked
+        run: cargo install wasm-bindgen-cli --version 0.2.129
       - name: Install dependencies
         run: npm ci
       - name: Verify (typecheck, build, tests)
         run: npm run typecheck && npm run build && npm run build:wasm && npm test
+      - name: Check registry for this version
+        id: check
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          if npm view "@sfstudio_tools/primer-calc@$VER" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Publish WASM subpackage
+        if: steps.check.outputs.exists != 'true'
         run: npm publish ./wasm-pkg --provenance --access public
       - name: Publish library
+        if: steps.check.outputs.exists != 'true'
         run: npm publish --provenance --access public

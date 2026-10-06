@@ -24,10 +24,9 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+        # wasm/rust-toolchain.toml pins the exact channel (reproducible builds).
       - name: Install wasm-bindgen CLI
-        run: cargo install wasm-bindgen-cli --locked
+        run: cargo install wasm-bindgen-cli --version 0.2.129
       - name: Install dependencies
         run: npm ci
       - name: Typecheck
