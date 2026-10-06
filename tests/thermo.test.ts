@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  danglingParams,
-  nnParams,
-  immParams,
-  tmmParams,
-  IMM_TABLE,
-  TMM_TABLE,
-} from '../src/constants.js';
+import { danglingParams, nnParams, immParams, tmmParams } from '../src/constants.js';
 import { alignmentThermodynamics, duplexThermodynamics } from '../src/thermo/nearest-neighbor.js';
 import {
   saltAdjustmentCelsius,

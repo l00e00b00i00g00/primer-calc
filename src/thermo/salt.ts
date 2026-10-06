@@ -74,7 +74,8 @@ export function owczarzySaltTm(
     if (r < 0.22) {
       return 1 / (1 / tmK + owczarzyMonoCorr(mon, gcFrac)) - ZERO_C_KELVIN;
     }
-    let { a, b, c, d, e, f, g } = OWCZARZY_2008;
+    let { a, d, g } = OWCZARZY_2008;
+    const { b, c, e, f } = OWCZARZY_2008;
     if (r < 6.0) {
       a = 3.92 * (0.843 - 0.352 * Math.sqrt(mon) * Math.log(mon));
       d = 1.42 * (1.279 - 4.03e-3 * Math.log(mon) - 8.03e-3 * Math.log(mon) ** 2);

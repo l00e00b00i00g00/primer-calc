@@ -5,50 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 0.2.0
 
-### Added
+### Minor Changes
 
-- `salt_method: 'owczarzy'` (Owczarzy et al. 2004/2008, via Biopython goldens):
-  mixed monovalent/divalent correction with Ka Mg:dNTP equilibrium and the
-  R-based decision tree; strictly closer to Primer3 than von Ahsen on every
-  goldens probe. New exports: `owczarzySaltTm`, `freeMagnesium`,
-  `dimerMeltingTemp`, `OWCZARZY_2008`; WASM reports carry `dh/ds/gc/n` so the
-  WASM backend shares the exact TypeScript Tm path.
-- Internal single mismatches (Allawi/SantaLucia/Peyret/Watkins IMM steps,
-  completeness test-locked) and terminal mismatches (SantaLucia & Peyret 2001
-  TMM units subsuming that end): dimer blocks extend by ≤ 1 terminal mismatch
-  per end. New exports: `IMM_TABLE`, `TMM_TABLE`, `immParams`, `tmmParams`;
-  `DuplexThermo` gains `terminalMM`. Mismatched dimers are scored, never
-  silently broken.
-- Thermodynamic DP local alignment (`tracebackBestAlignment`, O(n·m)):
-  WC stacks, chained IMM mismatches, single-nucleotide bulges. Candidate
-  generators union (blocks + merges + DP traceback) fully scored, minimum
-  wins — strictly improves on, never regresses, the block scan. Ported to
-  the Rust core with bit-exact parity.
-- Primer-vs-target analysis (`evaluateAgainstTarget`, both 5′ → 3′):
-  best binding frame, mismatch/bulge inventory with strand coordinates,
-  ΔΔG vs perfect match, 3′-terminus state (paired/mismatched/flap) and
-  extension flag. New exports: `evaluateAgainstTarget`, `bestDimerAlignment`,
-  `tracebackBestAlignment` (+ `TargetDuplexAnalysis`, `DuplexDifference`,
-  `DimerAlignment`, `DpAlignment` types); `PrimerAnalyzer` gains
-  `evaluateAgainstTarget`. Validated against Primer3 hetero goldens
-  (perfect, internal/terminal/double mismatches).
-- Primer pair analysis (`analyzePrimerPair`): shared-condition F/R reports,
-  Tm matching (≤ 5 °C), cross-dimer grading.
-- Degeneracy weighting modes (`mean`/`min`/`consensus`) across
-  `analyzeDegeneracy`, `PrimerAnalyzer`, `analyzePrimer` and `calculateTm`.
-- Batch analysis (`analyzeBatch`) sharing one analyzer/backend.
-- Shipped-size budgets (`scripts/check-size.mjs`) and micro-benchmarks
-  (`scripts/bench.mjs` + baselines, `--check` smoke in CI).
-- Changesets for pending-change tracking (`npx changeset add`).
-- Primer pair analysis (`analyzePrimerPair`): shared-condition F/R reports,
-  Tm matching (≤ 5 °C), cross-dimer grading.
-- Degeneracy weighting modes (`mean`/`min`/`consensus`) across
-  `analyzeDegeneracy`, `PrimerAnalyzer`, `analyzePrimer` and `calculateTm`.
-- Batch analysis (`analyzeBatch`) sharing one analyzer/backend.
-- Shipped-size budgets (`scripts/check-size.mjs`) and micro-benchmarks
-  (`scripts/bench.mjs` + baselines, `--check` smoke in CI).
+- [`71202ae`](https://github.com/l00e00b00i00g00/primer-calc/commit/71202aec3f5bb490695724f0b581d952092f8f3f) - Thermodynamics: Owczarzy salt correction, internal/terminal mismatch parameters (IMM/TMM), DP local alignment, primer-vs-target analysis. APIs: primer pairs, degeneracy weighting modes, batch analysis. WASM reports carry dh/ds/gc/n.
 
 ## [0.1.0] - 2026-10-06
 
