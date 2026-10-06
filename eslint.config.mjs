@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -14,6 +15,11 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    // Node-only scripts and examples (never bundled for browsers).
+    files: ['scripts/**/*.mjs', 'examples/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
   {
     rules: {
       '@typescript-eslint/no-unused-vars': [
