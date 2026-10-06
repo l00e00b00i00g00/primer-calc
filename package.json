@@ -1,0 +1,60 @@
+{
+  "name": "@synthflow/primer-calc",
+  "version": "0.1.0",
+  "description": "Enterprise & scientific-grade TypeScript library for primer/probe analysis: SantaLucia nearest-neighbor thermodynamics, secondary structures, multiplex cross-dimerization, IUPAC degeneracy.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "wasm/Cargo.toml",
+    "wasm/Cargo.lock",
+    "wasm/src",
+    "wasm-pkg",
+    "build-wasm.sh",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup && npm run build:worker",
+    "build:worker": "esbuild src/multiplex/worker-entry.ts --bundle --format=iife --platform=browser --target=es2022 --outfile=dist/worker.js --log-level=error",
+    "build:wasm": "./build-wasm.sh",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "npm run build && vitest run --coverage",
+    "test:coverage": "npm run build && vitest run --coverage",
+    "lint": "tsc --noEmit --strict",
+    "example": "tsx examples/quickstart.ts"
+  },
+  "keywords": [
+    "primer",
+    "pcr",
+    "thermodynamics",
+    "santalucia",
+    "nearest-neighbor",
+    "melting-temperature",
+    "bioinformatics",
+    "oligonucleotide",
+    "multiplex"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@vitest/coverage-v8": "^2.1.9",
+    "tsup": "^8.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

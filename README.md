@@ -1,0 +1,131 @@
+# 🧬 `@synthflow/primer-calc`
+
+Bibliothèque TypeScript open source (licence **Apache 2.0**) de référence pour l'analyse,
+l'optimisation et la thermodynamique des amorces (*primers*) et sondes oligonucléotidiques.
+
+## 📥 Installation
+
+```bash
+npm install @synthflow/primer-calc
+# ou : yarn add @synthflow/primer-calc
+#       pnpm add @synthflow/primer-calc
+#       bun add @synthflow/primer-calc
+```
+
+Vérification : le package apparaît dans les `dependencies` de votre `package.json`.
+
+## 🚀 Utilisation rapide
+
+```typescript
+import { analyzePrimer, calculateTm } from '@synthflow/primer-calc';
+
+// 1. Température de fusion (Tm)
+const tm = calculateTm('ATGCGTAGCTAGCTAGCTA');
+console.log(`Température de fusion : ${tm} °C`);
+
+// 2. Analyse complète (structures secondaires, GC%, etc.)
+const analysis = analyzePrimer('ATGCGTAGCTAGCTAGCTA');
+console.log('Rapport d’analyse :', analysis);
+```
+
+Exécutez avec `tsx` / `ts-node` : le terminal affiche la Tm et l'objet d'analyse
+sans erreur de compilation TypeScript. Voir `examples/quickstart.ts`
+(`npm run example`).
+
+## 💻 API avancée
+
+```typescript
+import { PrimerAnalyzer, MultiplexPool } from '@synthflow/primer-calc';
+
+const analyzer = new PrimerAnalyzer({
+  na_conc: 50,      // mM
+  mg_conc: 2.5,     // mM (correction de von Ahsen)
+  dNTPs_conc: 0.8,  // mM (total des 4 dNTP)
+  primer_conc: 200, // nM
+  temp_unit: 'C',
+});
+
+const result = analyzer.evaluate('ATGCGTAGCTAGCTAGCTA');
+console.log(`Tm (SantaLucia): ${result.tm.toFixed(2)} °C`);
+console.log(`GC Content: ${result.gcContent.toFixed(1)}%`);
+console.log(`Free Energy Hairpin: ${result.hairpin.deltaG?.toFixed(2) ?? 'n/a'} kcal/mol`);
+if (result.hasRisks) console.warn('Avertissements détectés :', result.warnings);
+
+const pool = new MultiplexPool([
+  { id: 'primer_fwd_1', seq: 'ATCGATCGATCGATCG' },
+  { id: 'primer_rev_1', seq: 'GCTAGCTAGCTAGCTA' },
+]);
+const crossCheck = pool.evaluateCrossDimerization();
+if (crossCheck.hasCrossDimers) {
+  console.error('Risque de dimérisation croisée :', crossCheck.conflicts);
+}
+
+// Grand pool : distribution sur worker threads (résultats identiques)
+const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 4 });
+```
+
+## 🧮 Modèle scientifique
+
+- **Nearest-neighbor SantaLucia 1998** (paramètres unifiés vérifiés contre l'exemple
+  de référence `CGTTGA` : ΔH = −40.9 kcal/mol, ΔS = −114.6 cal/(mol·K),
+  ΔG°37 = −5.36 kcal/mol), initiation, pénalité terminale A·T, correction de symétrie.
+- **Dangling ends** (Bommarito, Peyret & SantaLucia 2000, via SantaLucia & Hicks
+  2004 Table 3) : chaque base non appariée adjacente à une extrémité de duplex
+  (dimères et côté ouvert des hairpins) contribue son incrément mesuré —
+  aucune extrémité libre n'est ignorée.
+- **Tm** : `ΔH/(ΔS + R·ln(Ct/4)) − 273.15 + 16.6·log₁₀[Na⁺]eq − 0.75·DMSO%`
+  pour le duplex amorce–matrice ; dimères : `R·ln(Ct)` + symétrie (homodimères),
+  `R·ln(Ct/2)` (hétérodimères).
+- **Sels** : équivalent sodium de **von Ahsen 2001**,
+  `[Na⁺]eq = [mono] + 120·√([Mg²⁺] − [dNTP])` (mM), avec clamp Mg²⁺ ≥ 0.
+- **Structures** : hairpins (tiges parfaites + pénalités de boucle de Turner,
+  extrapolation Jacobson–Stockmayer au-delà de 9 nt), homo/hétéro-dimères
+  (balayage thermodynamique complet, pontage d'un mismatch interne unique).
+- **Seuils** : ΔG < −9 kcal/mol → alerte **critique** (hairpins, dimères) ;
+  ΔG ≤ −6 → avertissement ; dimère critique aussi si ancré en 3′ avec ΔG < −7.
+  Extrémité 3′ (fenêtre de 5 nt) : avertissement si ΔG°37 < −5, critique si
+  ≤ −6 (échelle calibrée sur l'amplitude physique d'un pentamère, max ≈ −6.7).
+- **IUPAC complet** : dégénérescence D = ∏nᵢ, Tm pondérée par abondance
+  (approximation d'O'Donnell–Maloney), structures évaluées sur le variant canonique.
+- **Biais 3′** : stabilité ΔG°37 du pentamère 3′-terminal + rapport de GC-clamp.
+
+## ⚡ Architecture hybride (TypeScript + WASM + workers)
+
+- **TypeScript pur par défaut** (`TypeScriptBackend`) : Node ≥ 18, Bun, navigateurs,
+  zéro dépendance native. Les imports `node:` (workers, chargeur WASM) sont
+  paresseux : le cœur d'analyse reste bundlable pour navigateur.
+- **Cœur Rust compilé en WASM** (`wasm/` → `wasm-pkg/`, `WasmBackend`) : moteur
+  dimères en parité stricte avec le TS (tests de parité bit-à-bit :
+  `tests/wasm.test.ts`). Chargement via `loadWasmBackend()` (URL explicite,
+  package `@synthflow/primer-calc-wasm`, puis build local) avec repli
+  automatique vers le moteur TS. Régénération : `npm run build:wasm`
+  (toolchain Rust + target `wasm32-unknown-unknown` + CLI `wasm-bindgen`).
+- **Multi-threading** : `MultiplexPool.evaluateCrossDimerizationParallel()`
+  distribue les paires sur `node:worker_threads` (Node uniquement ; même
+  assemblage de résultats, `tests/parallel.test.ts`).
+
+## 🧪 Tests
+
+```bash
+npm test             # Vitest : 127 tests (standards-or, cas limites, conformité spec)
+npm run test:coverage  # build + couverture V8 : 100 % lignes/fonctions/branches
+npm run build        # tsup : ESM + CJS + .d.ts dans dist/
+npm run build:wasm   # Rust → wasm-pkg/
+```
+
+Jeux de validation :
+- exemple duplex SantaLucia 1998 (`CGTTGA` : ΔH −40.9, ΔS −114.6) et
+  ΔG°37 SantaLucia & Hicks 2004 ;
+- table dangling ends Bommarito et al. 2000 ;
+- **benchmark croisé Primer3** (`tests/primer3.test.ts`, valeurs gelées
+  primer3-py 2.3.1) : structure différentielle NN identique (≤ 0.05 °C),
+  Tm absolus ≤ 2.5 °C (résidu documenté des révisions de tables 1998→2004
+  sur les stacks mixtes), homodimères ΔG ≤ 1.5 kcal/mol, ordre de Tm
+  identique en conditions PCR ;
+- parité bit-à-bit TS ≡ WASM (`tests/wasm.test.ts`), workers (`tests/parallel.test.ts`) ;
+- GC 0 %/100 %, séquences très courtes/longues, IUPAC complexes,
+  dégénérescence astronomique (`N×100`), conditions invalides.
+
+## 📄 Licence
+
+Apache 2.0 — voir `LICENSE`.

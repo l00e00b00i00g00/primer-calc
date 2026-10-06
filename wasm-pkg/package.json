@@ -1,0 +1,17 @@
+{
+  "name": "@synthflow/primer-calc-wasm",
+  "version": "0.1.0",
+  "description": "Compiled Rust/WASM dimer engine for @synthflow/primer-calc.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./primer_calc_wasm.js",
+  "types": "./primer_calc_wasm.d.ts",
+  "files": [
+    "primer_calc_wasm.js",
+    "primer_calc_wasm_bg.wasm",
+    "primer_calc_wasm.d.ts",
+    "web/primer_calc_wasm.js",
+    "web/primer_calc_wasm_bg.wasm",
+    "web/primer_calc_wasm.d.ts"
+  ]
+}

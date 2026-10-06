@@ -1,0 +1,48 @@
+{
+  "matched_tm": {
+    "ATGCGTAGCTAGCTAGCTA": 65.34,
+    "GCGCGCGC": 51.28,
+    "ATATATATATATATATATAT": 40.92,
+    "ATCGATCGATCGATCG": 59.58,
+    "CGTTGA": 1.19,
+    "GCGCGC": 29.32,
+    "CCCCCCCC": 37.4,
+    "GAGAGAGA": 17.22,
+    "CACACACA": 23.48,
+    "CTCTCTCT": 16.94
+  },
+  "pair_deltas": [
+    [
+      "GGGGAAAA",
+      "GGGGTTTT",
+      -0.775
+    ],
+    [
+      "CCCCAAAA",
+      "CCCCTTTT",
+      1.1
+    ],
+    [
+      "AAAACCCC",
+      "TTTTCCCC",
+      0.775
+    ],
+    [
+      "ATATATAT",
+      "TATATATA",
+      1.407
+    ]
+  ],
+  "homodimer_dg": {
+    "GCGCGCGC": -12.19,
+    "ATCGCGAT": -7.59
+  },
+  "full_tm": {
+    "ATGCGTAGCTAGCTAGCTA": 58.31,
+    "GCGCGCGC": 47.34,
+    "ATATATATATATATATATAT": 33.88,
+    "ATCGATCGATCGATCG": 53.28,
+    "CGTTGA": -1.57,
+    "GCGCGC": 26.58
+  }
+}
