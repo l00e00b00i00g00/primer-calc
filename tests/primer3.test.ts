@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calculateTm } from '../src/analyze.js';
 import { bestDimer } from '../src/structure/dimer.js';
+import { evaluateAgainstTarget } from '../src/target.js';
 import { resolveConditions } from '../src/PrimerAnalyzer.js';
 import goldens from './primer3-goldens.json';
 
@@ -30,6 +31,7 @@ interface Goldens {
   matched_tm: Record<string, number>;
   pair_deltas: Array<[string, string, number]>;
   homodimer_dg: Record<string, number>;
+  heterodimers: Array<[string, string, number]>;
   full_tm: Record<string, number>;
 }
 
@@ -62,6 +64,34 @@ describe('Primer3 cross-validation (frozen goldens)', () => {
       const d = bestDimer(seq, seq, cond, true);
       expect(Math.abs((d.deltaG as number) - expected)).toBeLessThanOrEqual(1.5);
     }
+  });
+
+  it('matches Primer3 heterodimer ΔG°37 incl. mismatches (≤ 3.0 kcal/mol)', () => {
+    // Gaps combine NN-table revisions (see matched-Tm findings) with
+    // model differences — except the single-internal-mismatch probe below,
+    // where Primer3-thal breaks the alignment while this engine scores the
+    // experimentally parameterized IMM steps.
+    const cond = resolveConditions({});
+    for (const [a, b, expected] of G.heterodimers) {
+      if (b === 'CTAGCAACGCAT') continue; // dedicated test below
+      const d = bestDimer(a, b, cond, false);
+      expect(Math.abs((d.deltaG as number) - expected)).toBeLessThanOrEqual(3.0);
+    }
+  });
+
+  it('scores isolated internal mismatches better than thal breaking', () => {
+    // Primer3-thal reports the broken sub-duplex (ΔG −5.74); the IMM model
+    // keeps the full duplex (ΔG ≈ −10.45, ΔΔG ≈ +2.98 — inside the
+    // experimental single-mismatch range of Allawi & SantaLucia).
+    const ref = G.heterodimers.find(([, b]) => b === 'CTAGCAACGCAT') as [string, string, number];
+    const cond = resolveConditions({});
+    const d = bestDimer(ref[0], ref[1], cond, false);
+    expect(d.deltaG as number).toBeLessThan(ref[2]);
+    const r = evaluateAgainstTarget(ref[0], ref[1]);
+    expect(r.deltaDeltaG37 as number).toBeGreaterThanOrEqual(1.0);
+    expect(r.deltaDeltaG37 as number).toBeLessThanOrEqual(5.0);
+    expect(r.differences).toHaveLength(1);
+    expect(r.differences[0]?.kind).toBe('mismatch');
   });
 
   it('owczarzy beats vonAhsen against Primer3 on every primer (≤ 2.5 °C)', () => {

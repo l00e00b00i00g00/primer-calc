@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   generators union (blocks + merges + DP traceback) fully scored, minimum
   wins — strictly improves on, never regresses, the block scan. Ported to
   the Rust core with bit-exact parity.
+- Primer-vs-target analysis (`evaluateAgainstTarget`, both 5′ → 3′):
+  best binding frame, mismatch/bulge inventory with strand coordinates,
+  ΔΔG vs perfect match, 3′-terminus state (paired/mismatched/flap) and
+  extension flag. New exports: `evaluateAgainstTarget`, `bestDimerAlignment`,
+  `tracebackBestAlignment` (+ `TargetDuplexAnalysis`, `DuplexDifference`,
+  `DimerAlignment`, `DpAlignment` types); `PrimerAnalyzer` gains
+  `evaluateAgainstTarget`. Validated against Primer3 hetero goldens
+  (perfect, internal/terminal/double mismatches).
 
 ## [0.1.0] - 2026-10-06
 

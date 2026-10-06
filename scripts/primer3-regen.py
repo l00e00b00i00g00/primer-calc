@@ -40,6 +40,14 @@ PAIR_DELTAS = [
 
 HOMODIMERS = ["GCGCGCGC", "ATCGCGAT"]
 
+HETERO = [
+    ("ATGCGTAGCTAG", "CTAGCTACGCAT"),
+    ("ATGCGTAGCTAG", "CTAGCAACGCAT"),
+    ("ATGCGTAGCTAG", "CTAGCTACGCAA"),
+    ("TTTGACAGCCTCTGAC", "ATCAGAGGCTGTCAAA"),
+    ("ATGCGTAGCTAG", "CTATCTACTCAT"),
+]
+
 FULL_SEQS = [
     "ATGCGTAGCTAGCTAGCTA",
     "GCGCGCGC",
@@ -95,6 +103,26 @@ def build() -> dict:
         )
         for s in HOMODIMERS
     }
+    hetero = [
+        [
+            a,
+            b,
+            round(
+                primer3.calc_heterodimer(
+                    a,
+                    b,
+                    mv_conc=50.0,
+                    dv_conc=2.5,
+                    dntp_conc=0.8,
+                    dna_conc=200.0,
+                    temp_c=37.0,
+                ).dg
+                / 1000.0,
+                2,
+            ),
+        ]
+        for a, b in HETERO
+    ]
     full = {
         s: round(
             primer3.calc_tm(
@@ -108,6 +136,7 @@ def build() -> dict:
         "matched_tm": matched,
         "pair_deltas": deltas,
         "homodimer_dg": homo,
+        "heterodimers": hetero,
         "full_tm": full,
     }
 

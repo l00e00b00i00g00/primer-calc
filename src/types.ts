@@ -149,6 +149,44 @@ export interface PrimerAnalysis {
   hasRisks: boolean;
 }
 
+/** A single primer/target difference in the winning alignment. */
+export interface DuplexDifference {
+  kind: 'mismatch' | 'bulge';
+  /** 0-based index into the primer (null when the primer bulges). */
+  primerIndex: number | null;
+  /** 0-based index into the target, 5′ → 3′ (null on primer bulge). */
+  targetIndex: number | null;
+  primerBase: string;
+  targetBase: string;
+}
+
+/** Primer-vs-target duplex analysis (SNP/mispriming evaluation). */
+export interface TargetDuplexAnalysis {
+  primer: string;
+  target: string;
+  /** Gapped depiction, both 5′ → 3′ (`-` = bulged position). */
+  alignedPrimer: string;
+  alignedTarget: string;
+  /** ΔG of the primer·target duplex at the evaluation temperature. */
+  deltaG: number | null;
+  /** Hetero-duplex Tm (always °C). */
+  tm: number | null;
+  tmUnit: TempUnit;
+  /** Perfect-match reference ΔG°37 (kcal/mol). */
+  deltaGPerfect37: number;
+  /** Perfect-match reference Tm. */
+  tmPerfect: number;
+  /** Destabilization vs perfect match at 37 °C (kcal/mol, ≥ 0). */
+  deltaDeltaG37: number | null;
+  differences: DuplexDifference[];
+  /** Primer 3′ terminus state: paired, mismatched, or unpaired (flap). */
+  threePrime: 'paired' | 'mismatched' | 'unpaired';
+  /** False unless the primer 3′ end is Watson–Crick paired. */
+  extendable: boolean;
+  warnings: AnalysisWarning[];
+  hasRisks: boolean;
+}
+
 /** A primer registered in a multiplex pool. */
 export interface PoolPrimer {
   id: string;

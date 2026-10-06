@@ -32,6 +32,50 @@ export function bestDimer(
   cond: ResolvedConditions,
   selfComplementary: boolean,
 ): DimerResult {
+  return dimerCore(a, b, cond, selfComplementary).result;
+}
+
+/** A scored dimer plus its winning alignment (strand coordinates). */
+export interface DimerAlignment {
+  result: DimerResult;
+  /** Winning top segment, 5′ → 3′ (`-` = bulge on this strand). */
+  top: string;
+  /** Winning bottom segment, 3′ → 5′ (`-` = bulge on this strand). */
+  bottom: string;
+  aStart: number;
+  bStartRev: number;
+}
+
+/**
+ * Best dimer with its winning alignment exposed (for target analysis,
+ * mismatch reporting, and depiction). `top`/`bottom` are empty when nothing
+ * is found.
+ */
+export function bestDimerAlignment(
+  a: string,
+  b: string,
+  cond: ResolvedConditions,
+  selfComplementary: boolean,
+): DimerAlignment {
+  const { result, aln } = dimerCore(a, b, cond, selfComplementary);
+  return {
+    result,
+    top: aln?.top ?? '',
+    bottom: aln?.bottom ?? '',
+    aStart: aln?.aStart ?? 0,
+    bStartRev: aln?.bStartRev ?? 0,
+  };
+}
+
+function dimerCore(
+  a: string,
+  b: string,
+  cond: ResolvedConditions,
+  selfComplementary: boolean,
+): {
+  result: DimerResult;
+  aln: { top: string; bottom: string; aStart: number; bStartRev: number } | null;
+} {
   const A = a.toUpperCase();
   const brev = [...b.toUpperCase()].reverse().join(''); // b in 3' → 5'
   const none: DimerResult = {
@@ -42,7 +86,7 @@ export function bestDimer(
     threePrimeRun: 0,
     threePrimeAnchored: false,
   };
-  if (A.length === 0 || brev.length === 0) return none;
+  if (A.length === 0 || brev.length === 0) return { result: none, aln: null };
 
   // paired[i][j]: A[i] pairs with brev[j].
   const pair: boolean[][] = Array.from({ length: A.length }, (_, i) =>
@@ -52,16 +96,25 @@ export function bestDimer(
   );
 
   let best: DimerResult = none;
+  let bestAln: { top: string; bottom: string; aStart: number; bStartRev: number } | null = null;
   const scoreOne = (top: string, bottom: string, aStart: number, bStartRev: number) => {
     const paired = countPaired(top, bottom);
     if (paired < 2) return;
     const len = top.length;
+    // Strand positions consumed (gaps excluded) drive flank lookup and
+    // 3′-reach detection; string length would overshoot on bulges.
+    let consTop = 0;
+    let consBottom = 0;
+    for (let p = 0; p < top.length; p++) {
+      if ((top[p] as string) !== '-') consTop++;
+      if ((bottom[p] as string) !== '-') consBottom++;
+    }
     const flanks: DuplexFlanks = {};
     if (aStart > 0) flanks.top5 = A[aStart - 1] as string;
     if (bStartRev > 0) flanks.bottom3 = brev[bStartRev - 1] as string;
-    if (aStart + len < A.length) flanks.top3 = A[aStart + len] as string;
-    if (bStartRev + len < brev.length) {
-      flanks.bottom5 = brev[bStartRev + len] as string;
+    if (aStart + consTop < A.length) flanks.top3 = A[aStart + consTop] as string;
+    if (bStartRev + consBottom < brev.length) {
+      flanks.bottom5 = brev[bStartRev + consBottom] as string;
     }
     const { dH, dS } = alignmentThermodynamics(top, bottom, selfComplementary, flanks);
     const dG = gibbsFreeEnergy(dH, dS, cond.eval_temp_c);
@@ -70,7 +123,7 @@ export function bestDimer(
     // A strand whose block does not reach its 3′ terminus (overhang)
     // cannot be extended: its run is 0 by definition.
     const [depTop, depBottom] = depictMerged(top, bottom);
-    const topReached = aStart + len === A.length;
+    const topReached = aStart + consTop === A.length;
     const bottomReached = bStartRev === 0;
     const run = Math.max(
       topReached ? trailingRun(depTop) : 0,
@@ -95,6 +148,7 @@ export function bestDimer(
         threePrimeRun: run,
         threePrimeAnchored: anchored,
       };
+      bestAln = { top, bottom, aStart, bStartRev };
     }
   };
 
@@ -197,7 +251,7 @@ export function bestDimer(
   for (const r of raw) {
     consider(r.top, r.bottom, r.aStart, r.bStartRev);
   }
-  return best;
+  return { result: best, aln: bestAln };
 }
 
 /** Paired run counted backwards from the right end (top strand, 5′→3′). */

@@ -7,6 +7,7 @@
 export { PrimerAnalyzer, resolveConditions } from './PrimerAnalyzer.js';
 export { MultiplexPool } from './MultiplexPool.js';
 export { analyzePrimer, calculateTm } from './analyze.js';
+export { evaluateAgainstTarget } from './target.js';
 
 export { PrimerValidationError } from './sequence/validate.js';
 export {
@@ -33,7 +34,8 @@ export { gibbsFreeEnergy, tmTwoState, tmSelfComplementary } from './thermo/gibbs
 export { meltingTemperature, dimerMeltingTemp } from './thermo/tm.js';
 
 export { bestHairpin } from './structure/hairpin.js';
-export { bestDimer } from './structure/dimer.js';
+export { bestDimer, bestDimerAlignment } from './structure/dimer.js';
+export type { DimerAlignment } from './structure/dimer.js';
 export { tracebackBestAlignment } from './structure/dp-align.js';
 export type { DpAlignment } from './structure/dp-align.js';
 export { analyzeThreePrime } from './bias/threePrime.js';
@@ -92,6 +94,8 @@ export type {
   DimerResult,
   ThreePrimeResult,
   PrimerAnalysis,
+  TargetDuplexAnalysis,
+  DuplexDifference,
   PoolPrimer,
   CrossDimerConflict,
   CrossDimerizationResult,

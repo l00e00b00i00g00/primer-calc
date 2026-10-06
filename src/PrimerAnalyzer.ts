@@ -18,6 +18,8 @@ import { normalizeSequence } from './sequence/validate.js';
 import { gcContent } from './sequence/gc.js';
 import { analyzeDegeneracy, canonicalVariant } from './sequence/degenerate.js';
 import { toUnit } from './thermo/tm.js';
+import { evaluateAgainstTarget } from './target.js';
+import type { TargetDuplexAnalysis } from './types.js';
 
 function finiteNumber(
   value: number | undefined,
@@ -238,5 +240,14 @@ export class PrimerAnalyzer {
       warnings,
       hasRisks,
     };
+  }
+
+  /**
+   * Primer-vs-target duplex analysis (SNP discrimination, mispriming).
+   * Both sequences 5′ → 3′. Runs on the TypeScript engine in every
+   * configuration (WASM parity is enforced by the shared test suite).
+   */
+  evaluateAgainstTarget(primerSeq: string, targetSeq: string): TargetDuplexAnalysis {
+    return evaluateAgainstTarget(primerSeq, targetSeq, this.conditions);
   }
 }
