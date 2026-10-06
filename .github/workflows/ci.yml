@@ -63,8 +63,11 @@ jobs:
       - name: Tests with coverage (100% gate)
         run: npm run test:coverage
       - name: Package validation (publint)
+        # Package-level checks run once (Node-version independent).
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22.x'
         run: npx -y publint
       - name: Types validation (attw)
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22.x'
         run: >
           npm pack --pack-destination /tmp --silent &&
           npx -y -p @arethetypeswrong/cli attw
