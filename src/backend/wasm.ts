@@ -13,7 +13,7 @@ import { sodiumEquivalent, saltAdjustmentCelsius } from '../thermo/salt.js';
 import { primerConcToMolar } from '../thermo/tm.js';
 
 /**
- * Minimal surface of the compiled `@synthflow/primer-calc-wasm` module
+ * Minimal surface of the compiled `@sfstudio_tools/primer-calc-wasm` module
  * (see `wasm/` + `wasm-pkg/`). Structural typing keeps this working with the
  * published package, the in-repo build, or any compatible engine.
  */
@@ -185,7 +185,7 @@ export interface WasmLoadOptions {
 /**
  * Lazily loads the WASM backend, probing in order:
  * 1. `opts.url` when provided;
- * 2. the published `@synthflow/primer-calc-wasm` package (explicit install);
+ * 2. the published `@sfstudio_tools/primer-calc-wasm` package (explicit install);
  * 3. the in-repo/bundled build (`wasm-pkg/`, `npm run build:wasm`).
  *
  * Resolves to `null` when nothing is available — callers fall back to
@@ -240,7 +240,7 @@ async function probeLocalBuild(): Promise<ComputeBackend | null> {
 async function probePublishedPackage(): Promise<WasmDimerModule | null> {
   try {
     // Non-literal specifier: the optional peer stays out of the static graph.
-    const specifier: string = '@synthflow/primer-calc-wasm';
+    const specifier: string = '@sfstudio_tools/primer-calc-wasm';
     return (await import(specifier)) as unknown as WasmDimerModule;
   } catch {
     // Optional package absent.

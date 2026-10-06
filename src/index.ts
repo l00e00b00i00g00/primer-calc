@@ -1,5 +1,5 @@
 /**
- * `@synthflow/primer-calc` — scientific-grade primer/probe thermodynamics.
+ * `@sfstudio_tools/primer-calc` — scientific-grade primer/probe thermodynamics.
  *
  * @packageDocumentation
  */

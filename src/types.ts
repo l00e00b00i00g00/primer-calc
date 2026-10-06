@@ -1,5 +1,5 @@
 /**
- * Public type definitions for `@synthflow/primer-calc`.
+ * Public type definitions for `@sfstudio_tools/primer-calc`.
  *
  * All concentrations follow the units documented on each field.
  * Temperatures are expressed in the unit selected via {@link PcrConditions.temp_unit}

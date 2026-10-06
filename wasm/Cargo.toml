@@ -2,7 +2,7 @@
 name = "primer-calc-wasm"
 version = "0.1.0"
 edition = "2021"
-description = "Rust/WASM high-performance core for @synthflow/primer-calc (optional accelerator)"
+description = "Rust/WASM high-performance core for @sfstudio_tools/primer-calc (optional accelerator)"
 
 [lib]
 crate-type = ["cdylib"]

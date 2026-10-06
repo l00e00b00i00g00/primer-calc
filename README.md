@@ -1,4 +1,4 @@
-# 🧬 `@synthflow/primer-calc`
+# 🧬 `@sfstudio_tools/primer-calc`
 
 Bibliothèque TypeScript open source (licence **Apache 2.0**) de référence pour l'analyse,
 l'optimisation et la thermodynamique des amorces (*primers*) et sondes oligonucléotidiques.
@@ -6,10 +6,10 @@ l'optimisation et la thermodynamique des amorces (*primers*) et sondes oligonucl
 ## 📥 Installation
 
 ```bash
-npm install @synthflow/primer-calc
-# ou : yarn add @synthflow/primer-calc
-#       pnpm add @synthflow/primer-calc
-#       bun add @synthflow/primer-calc
+npm install @sfstudio_tools/primer-calc
+# ou : yarn add @sfstudio_tools/primer-calc
+#       pnpm add @sfstudio_tools/primer-calc
+#       bun add @sfstudio_tools/primer-calc
 ```
 
 Vérification : le package apparaît dans les `dependencies` de votre `package.json`.
@@ -17,7 +17,7 @@ Vérification : le package apparaît dans les `dependencies` de votre `package.j
 ## 🚀 Utilisation rapide
 
 ```typescript
-import { analyzePrimer, calculateTm } from '@synthflow/primer-calc';
+import { analyzePrimer, calculateTm } from '@sfstudio_tools/primer-calc';
 
 // 1. Température de fusion (Tm)
 const tm = calculateTm('ATGCGTAGCTAGCTAGCTA');
@@ -35,7 +35,7 @@ sans erreur de compilation TypeScript. Voir `examples/quickstart.ts`
 ## 💻 API avancée
 
 ```typescript
-import { PrimerAnalyzer, MultiplexPool } from '@synthflow/primer-calc';
+import { PrimerAnalyzer, MultiplexPool } from '@sfstudio_tools/primer-calc';
 
 const analyzer = new PrimerAnalyzer({
   na_conc: 50,      // mM
@@ -98,7 +98,7 @@ const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 4 }
   dimères en parité stricte avec le TS (tests de parité bit-à-bit :
   `tests/wasm.test.ts`, `tests/wasm-web.test.ts`).
   - Node.js : `loadWasmBackend()` (URL explicite, package
-    `@synthflow/primer-calc-wasm`, puis build local `wasm-pkg/`) avec repli
+    `@sfstudio_tools/primer-calc-wasm`, puis build local `wasm-pkg/`) avec repli
     automatique vers le moteur TS.
   - Navigateurs : build `wasm-pkg/web/` (`--target web`, fecth-based) +
     `loadWasmBackendWeb(urlGlue)` ; en bundler (Vite/webpack), importez la
@@ -151,8 +151,8 @@ Apache 2.0 — voir `LICENSE`.
 ```bash
 npm login
 # Premier publish du scope : accès public requis.
-npm publish --access public            # @synthflow/primer-calc
-npm publish ./wasm-pkg --access public # @synthflow/primer-calc-wasm (optionnel)
+npm publish --access public            # @sfstudio_tools/primer-calc
+npm publish ./wasm-pkg --access public # @sfstudio_tools/primer-calc-wasm (optionnel)
 # Avec GitHub Actions OIDC : ajouter --provenance aux deux commandes.
 ```
 

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { resolveConditions } from '../src/PrimerAnalyzer.js';
 
-// Simulates an explicitly installed @synthflow/primer-calc-wasm package.
-vi.mock('@synthflow/primer-calc-wasm', () => ({
+// Simulates an explicitly installed @sfstudio_tools/primer-calc-wasm package.
+vi.mock('@sfstudio_tools/primer-calc-wasm', () => ({
   dimer_report_json: () =>
     JSON.stringify({
       found: true,

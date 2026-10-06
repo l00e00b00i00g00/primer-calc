@@ -2,7 +2,7 @@
 # Builds the compiled Rust/WASM core:
 # - wasm-pkg/            → experimental-nodejs-module output (Node.js)
 # - wasm-pkg/web/        → web output (browsers / bundlers, fetch-based)
-# wasm-pkg/ is publishable as @synthflow/primer-calc-wasm (see its package.json).
+# wasm-pkg/ is publishable as @sfstudio_tools/primer-calc-wasm (see its package.json).
 # Requires the Rust toolchain with the wasm32-unknown-unknown target and the
 # wasm-bindgen CLI:
 #   rustup target add wasm32-unknown-unknown
@@ -23,9 +23,9 @@ node -e "
 const fs = require('node:fs');
 const root = '$ROOT';
 const pkg = {
-  name: '@synthflow/primer-calc-wasm',
+  name: '@sfstudio_tools/primer-calc-wasm',
   version: require(root + '/package.json').version,
-  description: 'Compiled Rust/WASM dimer engine for @synthflow/primer-calc.',
+  description: 'Compiled Rust/WASM dimer engine for @sfstudio_tools/primer-calc.',
   license: 'Apache-2.0',
   publishConfig: { access: 'public' },
   type: 'module',

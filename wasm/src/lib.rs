@@ -1,4 +1,4 @@
-//! High-performance dimer engine for `@synthflow/primer-calc`.
+//! High-performance dimer engine for `@sfstudio_tools/primer-calc`.
 //!
 //! Strict parity with the TypeScript engine (`src/structure/dimer.ts` +
 //! `src/thermo/nearest-neighbor.ts`):
