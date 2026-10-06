@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { danglingParams, nnParams } from '../src/constants.js';
-import {
-  alignmentThermodynamics,
-  duplexThermodynamics,
-} from '../src/thermo/nearest-neighbor.js';
-import {
-  saltAdjustmentCelsius,
-  sodiumEquivalent,
-} from '../src/thermo/salt.js';
+import { alignmentThermodynamics, duplexThermodynamics } from '../src/thermo/nearest-neighbor.js';
+import { saltAdjustmentCelsius, sodiumEquivalent } from '../src/thermo/salt.js';
 import { gibbsFreeEnergy } from '../src/thermo/gibbs.js';
 import { meltingTemperature } from '../src/thermo/tm.js';
 import { hairpinLoopParams } from '../src/constants.js';
@@ -183,35 +177,20 @@ describe('meltingTemperature', () => {
   });
 
   it('rises with salt and primer concentration', () => {
-    const low = meltingTemperature(
-      'ATGCGTAGCTAGCTAGCTA',
-      resolveConditions({ na_conc: 10 }),
-    );
-    const high = meltingTemperature(
-      'ATGCGTAGCTAGCTAGCTA',
-      resolveConditions({ na_conc: 200 }),
-    );
+    const low = meltingTemperature('ATGCGTAGCTAGCTAGCTA', resolveConditions({ na_conc: 10 }));
+    const high = meltingTemperature('ATGCGTAGCTAGCTAGCTA', resolveConditions({ na_conc: 200 }));
     expect(high.tmC).toBeGreaterThan(low.tmC);
     const dilute = meltingTemperature(
       'ATGCGTAGCTAGCTAGCTA',
       resolveConditions({ primer_conc: 50 }),
     );
-    const conc = meltingTemperature(
-      'ATGCGTAGCTAGCTAGCTA',
-      resolveConditions({ primer_conc: 500 }),
-    );
+    const conc = meltingTemperature('ATGCGTAGCTAGCTAGCTA', resolveConditions({ primer_conc: 500 }));
     expect(conc.tmC).toBeGreaterThan(dilute.tmC);
   });
 
   it('is lowered by DMSO (−0.75 °C per %)', () => {
-    const plain = meltingTemperature(
-      'ATGCGTAGCTAGCTAGCTA',
-      resolveConditions({ dmso_percent: 0 }),
-    );
-    const dmso = meltingTemperature(
-      'ATGCGTAGCTAGCTAGCTA',
-      resolveConditions({ dmso_percent: 4 }),
-    );
+    const plain = meltingTemperature('ATGCGTAGCTAGCTAGCTA', resolveConditions({ dmso_percent: 0 }));
+    const dmso = meltingTemperature('ATGCGTAGCTAGCTAGCTA', resolveConditions({ dmso_percent: 4 }));
     expect(plain.tmC - dmso.tmC).toBeCloseTo(3.0, 9);
   });
 

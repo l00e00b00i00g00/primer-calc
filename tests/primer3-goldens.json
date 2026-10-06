@@ -12,26 +12,10 @@
     "CTCTCTCT": 16.94
   },
   "pair_deltas": [
-    [
-      "GGGGAAAA",
-      "GGGGTTTT",
-      -0.775
-    ],
-    [
-      "CCCCAAAA",
-      "CCCCTTTT",
-      1.1
-    ],
-    [
-      "AAAACCCC",
-      "TTTTCCCC",
-      0.775
-    ],
-    [
-      "ATATATAT",
-      "TATATATA",
-      1.407
-    ]
+    ["GGGGAAAA", "GGGGTTTT", -0.775],
+    ["CCCCAAAA", "CCCCTTTT", 1.1],
+    ["AAAACCCC", "TTTTCCCC", 0.775],
+    ["ATATATAT", "TATATATA", 1.407]
   ],
   "homodimer_dg": {
     "GCGCGCGC": -12.19,

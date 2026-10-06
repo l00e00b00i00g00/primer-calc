@@ -19,26 +19,12 @@ export {
   isWatsonCrickPair,
 } from './sequence/iupac.js';
 export { gcContent, atContent, baseCounts } from './sequence/gc.js';
-export {
-  enumerateVariants,
-  analyzeDegeneracy,
-  canonicalVariant,
-} from './sequence/degenerate.js';
+export { enumerateVariants, analyzeDegeneracy, canonicalVariant } from './sequence/degenerate.js';
 
-export {
-  duplexThermodynamics,
-  alignmentThermodynamics,
-} from './thermo/nearest-neighbor.js';
+export { duplexThermodynamics, alignmentThermodynamics } from './thermo/nearest-neighbor.js';
 export type { DuplexFlanks } from './thermo/nearest-neighbor.js';
-export {
-  sodiumEquivalent,
-  saltAdjustmentCelsius,
-} from './thermo/salt.js';
-export {
-  gibbsFreeEnergy,
-  tmTwoState,
-  tmSelfComplementary,
-} from './thermo/gibbs.js';
+export { sodiumEquivalent, saltAdjustmentCelsius } from './thermo/salt.js';
+export { gibbsFreeEnergy, tmTwoState, tmSelfComplementary } from './thermo/gibbs.js';
 export { meltingTemperature } from './thermo/tm.js';
 
 export { bestHairpin } from './structure/hairpin.js';
@@ -68,11 +54,7 @@ export {
   loadWasmBackendWeb,
   initWasmModule,
 } from './backend/wasm.js';
-export type {
-  WasmDimerModule,
-  WasmWebModule,
-  WasmLoadOptions,
-} from './backend/wasm.js';
+export type { WasmDimerModule, WasmWebModule, WasmLoadOptions } from './backend/wasm.js';
 
 export {
   INITIATION,

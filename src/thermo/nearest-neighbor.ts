@@ -1,10 +1,4 @@
-import {
-  INITIATION,
-  SYMMETRY_DS,
-  TERMINAL_AT,
-  danglingParams,
-  nnParams,
-} from '../constants.js';
+import { INITIATION, SYMMETRY_DS, TERMINAL_AT, danglingParams, nnParams } from '../constants.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
 
 /** Cumulative duplex thermodynamics. */
@@ -27,10 +21,7 @@ export interface DuplexThermo {
  *
  * @param selfComplementary apply the symmetry correction (homoduplexes).
  */
-export function duplexThermodynamics(
-  seq: string,
-  selfComplementary = false,
-): DuplexThermo {
+export function duplexThermodynamics(seq: string, selfComplementary = false): DuplexThermo {
   const s = seq.toUpperCase();
   let dH = INITIATION.dH;
   let dS = INITIATION.dS;
@@ -42,9 +33,7 @@ export function duplexThermodynamics(
     const ca = comp[a];
     const cb = comp[b];
     if (ca === undefined || cb === undefined) {
-      throw new Error(
-        `duplexThermodynamics requires an unambiguous sequence (got "${a}${b}").`,
-      );
+      throw new Error(`duplexThermodynamics requires an unambiguous sequence (got "${a}${b}").`);
     }
     // Bottom 3'→5' = comp(a) followed by comp(b).
     // Total lookup: ca/cb are the Watson–Crick complements of a/b, so every
@@ -164,8 +153,7 @@ export function alignmentThermodynamics(
   if (selfComplementary) dS += SYMMETRY_DS;
   // Bulge penalty converted to (dH, dS) at 37 °C: pure-enthalpy penalty.
   const bulges =
-    [...top].filter((c) => c === '-').length +
-    [...bottom].filter((c) => c === '-').length;
+    [...top].filter((c) => c === '-').length + [...bottom].filter((c) => c === '-').length;
   dH += BULGE_DG37 * bulges;
   return { dH, dS, terminalAT };
 }

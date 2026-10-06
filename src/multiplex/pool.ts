@@ -29,9 +29,7 @@ export function assembleCrossDimerization(
     (matrix[j] as (number | null)[])[i] = dG;
     if (dG !== null && dG <= WARNING_DG) {
       const severity =
-        dG < CRITICAL_DG || (dimer.threePrimeAnchored && dG < -7)
-          ? 'critical'
-          : 'warning';
+        dG < CRITICAL_DG || (dimer.threePrimeAnchored && dG < -7) ? 'critical' : 'warning';
       conflicts.push({
         primerA: ids[i] as string,
         primerB: ids[j] as string,

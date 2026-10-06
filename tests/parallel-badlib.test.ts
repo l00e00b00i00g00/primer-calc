@@ -11,8 +11,6 @@ describe('parallel evaluation with an unloadable bundle', () => {
   it('rejects with the worker error', async () => {
     const { MultiplexPool } = await import('../src/MultiplexPool.js');
     const pool = new MultiplexPool([{ id: 'a', seq: 'ATGCATGCATGC' }]);
-    await expect(
-      pool.evaluateCrossDimerizationParallel({}, { workers: 1 }),
-    ).rejects.toThrow();
+    await expect(pool.evaluateCrossDimerizationParallel({}, { workers: 1 })).rejects.toThrow();
   }, 60000);
 });

@@ -61,27 +61,16 @@ export async function crossDimerizationParallel(
     }
   }
   if (libPath === null) {
-    throw new Error(
-      'Parallel evaluation requires the built bundle (run `npm run build`).',
-    );
+    throw new Error('Parallel evaluation requires the built bundle (run `npm run build`).');
   }
   const n = primers.length;
   const pairs: Array<[number, number, string, string, boolean]> = [];
   for (let i = 0; i < n; i++) {
     for (let j = i; j < n; j++) {
-      pairs.push([
-        i,
-        j,
-        (primers[i] as PoolPrimer).seq,
-        (primers[j] as PoolPrimer).seq,
-        i === j,
-      ]);
+      pairs.push([i, j, (primers[i] as PoolPrimer).seq, (primers[j] as PoolPrimer).seq, i === j]);
     }
   }
-  const workerCount = Math.max(
-    1,
-    Math.min(opts.workers ?? node.cpus().length, pairs.length),
-  );
+  const workerCount = Math.max(1, Math.min(opts.workers ?? node.cpus().length, pairs.length));
   const timeoutMs = opts.timeoutMs ?? 120000;
   const chunks: (typeof pairs)[] = Array.from({ length: workerCount }, () => []);
   pairs.forEach((p, k) => {
@@ -96,9 +85,7 @@ export async function crossDimerizationParallel(
     );
     parentPort.postMessage(out);
   `;
-  const runChunk = (
-    chunk: typeof pairs,
-  ): Promise<Array<[number, number, DimerResult]>> =>
+  const runChunk = (chunk: typeof pairs): Promise<Array<[number, number, DimerResult]>> =>
     new Promise((resolve, reject) => {
       // A synchronous throw in the executor rejects the promise.
       const worker: Worker = new node.Worker(code, {

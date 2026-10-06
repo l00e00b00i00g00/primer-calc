@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+wasm-pkg
+wasm/target
+*.tgz
+package-lock.json

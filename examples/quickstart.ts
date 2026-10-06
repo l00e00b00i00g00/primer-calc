@@ -2,12 +2,7 @@
  * Quickstart example (spec §installation & §4).
  * Run with: npm run example  (tsx examples/quickstart.ts)
  */
-import {
-  PrimerAnalyzer,
-  MultiplexPool,
-  analyzePrimer,
-  calculateTm,
-} from '../src/index.js';
+import { PrimerAnalyzer, MultiplexPool, analyzePrimer, calculateTm } from '../src/index.js';
 
 // 1. Calcul rapide de la température de fusion (Tm)
 const tm = calculateTm('ATGCGTAGCTAGCTAGCTA');
@@ -29,9 +24,7 @@ const analyzer = new PrimerAnalyzer({
 const result = analyzer.evaluate('ATGCGTAGCTAGCTAGCTA');
 console.log(`Tm (SantaLucia): ${result.tm.toFixed(2)} °C`);
 console.log(`GC Content: ${result.gcContent.toFixed(1)}%`);
-console.log(
-  `Free Energy Hairpin: ${result.hairpin.deltaG?.toFixed(2) ?? 'n/a'} kcal/mol`,
-);
+console.log(`Free Energy Hairpin: ${result.hairpin.deltaG?.toFixed(2) ?? 'n/a'} kcal/mol`);
 if (result.hasRisks) {
   console.warn('Avertissements détectés :', result.warnings);
 }
@@ -42,10 +35,7 @@ const pool = new MultiplexPool([
 ]);
 const crossCheck = pool.evaluateCrossDimerization();
 if (crossCheck.hasCrossDimers) {
-  console.error(
-    'Risque de dimérisation croisée détecté entre :',
-    crossCheck.conflicts,
-  );
+  console.error('Risque de dimérisation croisée détecté entre :', crossCheck.conflicts);
 } else {
   console.log('Pool multiplex : aucune dimérisation croisée détectée.');
 }

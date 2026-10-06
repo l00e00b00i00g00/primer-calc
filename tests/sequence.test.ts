@@ -8,10 +8,7 @@ import {
   isWatsonCrickPair,
   reverseComplement,
 } from '../src/sequence/iupac.js';
-import {
-  PrimerValidationError,
-  normalizeSequence,
-} from '../src/sequence/validate.js';
+import { PrimerValidationError, normalizeSequence } from '../src/sequence/validate.js';
 import { atContent, baseCounts, gcContent } from '../src/sequence/gc.js';
 import {
   analyzeDegeneracy,
@@ -95,9 +92,7 @@ describe('normalizeSequence', () => {
   });
 
   it('rejects non-string input', () => {
-    expect(() => normalizeSequence(42 as unknown as string)).toThrow(
-      PrimerValidationError,
-    );
+    expect(() => normalizeSequence(42 as unknown as string)).toThrow(PrimerValidationError);
   });
 });
 
@@ -157,12 +152,8 @@ describe('degeneracy', () => {
     expect(info.tmMin).not.toBeNull();
     expect(info.tmMax).not.toBeNull();
     expect(info.tmMin as number).toBeLessThan(info.tmMax as number);
-    expect(info.tmWeighted as number).toBeGreaterThanOrEqual(
-      info.tmMin as number,
-    );
-    expect(info.tmWeighted as number).toBeLessThanOrEqual(
-      info.tmMax as number,
-    );
+    expect(info.tmWeighted as number).toBeGreaterThanOrEqual(info.tmMin as number);
+    expect(info.tmWeighted as number).toBeLessThanOrEqual(info.tmMax as number);
     expect(info.variantsEnumerated).toBe(4);
   });
 });

@@ -32,6 +32,16 @@ jobs:
         run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Format check
+        run: npm run format:check
+      - name: Audit production dependencies (gate)
+        # Zero runtime dependencies: this must always be clean.
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit full tree (informational)
+        # Dev-toolchain advisories (vitest/vite) are tracked, not gating.
+        run: npm audit || true
       - name: Build TypeScript
         run: npm run build
       - name: Build WASM core
@@ -40,6 +50,13 @@ jobs:
         run: git diff --exit-code -- wasm-pkg/
       - name: Tests with coverage (100% gate)
         run: npm run test:coverage
+      - name: Package validation (publint)
+        run: npx -y publint
+      - name: Types validation (attw)
+        run: >
+          npm pack --pack-destination /tmp --silent &&
+          npx -y -p @arethetypeswrong/cli attw
+          --pack /tmp/sfstudio_tools-primer-calc-*.tgz
 
   primer3:
     # Continuous cross-validation against Primer3 thermodynamics.

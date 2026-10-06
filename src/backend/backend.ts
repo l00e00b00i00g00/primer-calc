@@ -1,9 +1,4 @@
-import type {
-  DimerResult,
-  HairpinResult,
-  ResolvedConditions,
-  ThreePrimeResult,
-} from '../types.js';
+import type { DimerResult, HairpinResult, ResolvedConditions, ThreePrimeResult } from '../types.js';
 import { bestHairpin } from '../structure/hairpin.js';
 import { bestDimer } from '../structure/dimer.js';
 import { analyzeThreePrime } from '../bias/threePrime.js';
@@ -26,7 +21,10 @@ export interface ComputeBackend {
   homodimer(seq: string, cond: ResolvedConditions): DimerResult;
   heterodimer(a: string, b: string, cond: ResolvedConditions): DimerResult;
   threePrime(seq: string): ThreePrimeResult;
-  tm(seq: string, cond: ResolvedConditions): {
+  tm(
+    seq: string,
+    cond: ResolvedConditions,
+  ): {
     tmC: number;
     dH: number;
     dS: number;

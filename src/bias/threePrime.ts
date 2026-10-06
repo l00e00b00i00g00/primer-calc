@@ -15,7 +15,7 @@ export const THREE_PRIME_WINDOW = 5;
 export function analyzeThreePrime(seq: string): ThreePrimeResult {
   const s = seq.toUpperCase();
   const window = s.slice(-THREE_PRIME_WINDOW);
-  let deltaG37: number | null = null;
+  let deltaG37: number | null;
   try {
     const { dH, dS } = duplexThermodynamics(window, false);
     deltaG37 = gibbsFreeEnergy(dH, dS, 37);

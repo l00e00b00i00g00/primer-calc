@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
 import { MultiplexPool } from '../src/MultiplexPool.js';
 
-const distBuilt = existsSync(
-  new URL('../dist/index.cjs', import.meta.url),
-);
+const distBuilt = existsSync(new URL('../dist/index.cjs', import.meta.url));
 
 describe.runIf(distBuilt)('worker-thread multiplex evaluation', () => {
   it('matches the synchronous report exactly', async () => {
@@ -17,10 +15,7 @@ describe.runIf(distBuilt)('worker-thread multiplex evaluation', () => {
     ];
     const pool = new MultiplexPool(primers);
     const sync = pool.evaluateCrossDimerization();
-    const parallel = await pool.evaluateCrossDimerizationParallel(
-      {},
-      { workers: 2 },
-    );
+    const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 2 });
     expect(parallel).toEqual(sync);
     expect(parallel.hasCrossDimers).toBe(true);
   });
@@ -32,8 +27,8 @@ describe.runIf(distBuilt)('worker-thread multiplex evaluation', () => {
       return { id: `q${i}`, seq: base.slice(rot) + base.slice(0, rot) };
     });
     const pool = new MultiplexPool(primers);
-    await expect(
-      pool.evaluateCrossDimerizationParallel({}, { timeoutMs: 1 }),
-    ).rejects.toThrow(/timed out/);
+    await expect(pool.evaluateCrossDimerizationParallel({}, { timeoutMs: 1 })).rejects.toThrow(
+      /timed out/,
+    );
   }, 60000);
 });

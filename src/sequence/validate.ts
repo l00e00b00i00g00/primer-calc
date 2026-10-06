@@ -23,10 +23,7 @@ const VALID_PATTERN = /^[ACGT RYSWKMBDHVN]+$/i;
  */
 export function normalizeSequence(input: string): string {
   if (typeof input !== 'string') {
-    throw new PrimerValidationError(
-      'INVALID_TYPE',
-      'Primer sequence must be a string.',
-    );
+    throw new PrimerValidationError('INVALID_TYPE', 'Primer sequence must be a string.');
   }
   const seq = input.trim().toUpperCase().replace(/\s+/g, '');
   if (seq.length === 0) {

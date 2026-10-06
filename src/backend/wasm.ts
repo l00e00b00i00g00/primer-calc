@@ -1,13 +1,5 @@
-import type {
-  DimerResult,
-  HairpinResult,
-  ResolvedConditions,
-  ThreePrimeResult,
-} from '../types.js';
-import {
-  TypeScriptBackend,
-  type ComputeBackend,
-} from './backend.js';
+import type { DimerResult, HairpinResult, ResolvedConditions, ThreePrimeResult } from '../types.js';
+import { TypeScriptBackend, type ComputeBackend } from './backend.js';
 import { canonicalVariant } from '../sequence/degenerate.js';
 import { sodiumEquivalent, saltAdjustmentCelsius } from '../thermo/salt.js';
 import { primerConcToMolar } from '../thermo/tm.js';
@@ -46,9 +38,7 @@ export interface WasmWebModule extends WasmDimerModule {
  *
  * @throws when the module lacks the dimer surface.
  */
-export async function initWasmModule(
-  mod: unknown,
-): Promise<WasmDimerModule> {
+export async function initWasmModule(mod: unknown): Promise<WasmDimerModule> {
   const candidate = mod as WasmWebModule | null;
   if (!candidate || typeof candidate.dimer_report_json !== 'function') {
     throw new Error('Not a primer-calc WASM module (missing dimer surface).');
@@ -65,9 +55,7 @@ export async function initWasmModule(
  * over http(s)). For bytes-driven or bundler-managed setups, import the
  * glue yourself, run its initializer, then `new WasmBackend(mod)`.
  */
-export async function loadWasmBackendWeb(
-  glueUrl: string,
-): Promise<ComputeBackend> {
+export async function loadWasmBackendWeb(glueUrl: string): Promise<ComputeBackend> {
   return new WasmBackend(await initWasmModule(await import(glueUrl)));
 }
 
@@ -94,9 +82,7 @@ export class WasmBackend implements ComputeBackend {
 
   constructor(private readonly wasm: WasmDimerModule) {
     if (!wasm || typeof wasm.dimer_report_json !== 'function') {
-      throw new Error(
-        'WasmBackend requires a module exposing dimer_report_json().',
-      );
+      throw new Error('WasmBackend requires a module exposing dimer_report_json().');
     }
   }
 
@@ -138,9 +124,7 @@ export class WasmBackend implements ComputeBackend {
     const ctM = primerConcToMolar(cond.primer_conc);
     const saltAdj =
       cond.salt_method === 'vonAhsen'
-        ? saltAdjustmentCelsius(
-            sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc),
-          )
+        ? saltAdjustmentCelsius(sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc))
         : 0;
     let report: WasmDimerReport;
     try {
@@ -193,9 +177,7 @@ export interface WasmLoadOptions {
  * `wasm-pkg` output and either pass `url` or construct {@link WasmBackend}
  * directly.
  */
-export async function loadWasmBackend(
-  opts: WasmLoadOptions = {},
-): Promise<ComputeBackend | null> {
+export async function loadWasmBackend(opts: WasmLoadOptions = {}): Promise<ComputeBackend | null> {
   if (opts.url) {
     try {
       const mod = (await import(opts.url)) as unknown as WasmDimerModule;
@@ -220,16 +202,10 @@ export async function loadWasmBackend(
 
 async function probeLocalBuild(): Promise<ComputeBackend | null> {
   // Node-only APIs are imported lazily so browser bundlers never see them.
-  const [fs, urlMod] = await Promise.all([
-    import('node:fs'),
-    import('node:url'),
-  ]);
+  const [fs, urlMod] = await Promise.all([import('node:fs'), import('node:url')]);
   // Candidate layouts, first hit wins: flat dist bundle (dist/index.js),
   // nested modules, and sources (vitest run from src/backend/*).
-  const hit = [
-    '../wasm-pkg/primer_calc_wasm.js',
-    '../../wasm-pkg/primer_calc_wasm.js',
-  ]
+  const hit = ['../wasm-pkg/primer_calc_wasm.js', '../../wasm-pkg/primer_calc_wasm.js']
     .map((rel) => new URL(rel, import.meta.url))
     .find((u) => fs.existsSync(urlMod.fileURLToPath(u)));
   if (!hit) return null;

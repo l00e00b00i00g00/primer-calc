@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TypeScriptBackend } from '../src/backend/backend.js';
-import {
-  WasmBackend,
-  loadWasmBackend,
-  type WasmDimerModule,
-} from '../src/backend/wasm.js';
+import { WasmBackend, loadWasmBackend, type WasmDimerModule } from '../src/backend/wasm.js';
 import { MultiplexPool } from '../src/MultiplexPool.js';
 import { resolveConditions } from '../src/PrimerAnalyzer.js';
 
@@ -34,8 +30,7 @@ describe('WASM backend loader', () => {
   });
 
   it('accepts an explicit module URL', async () => {
-    const url = new URL('../wasm-pkg/primer_calc_wasm.js', import.meta.url)
-      .href;
+    const url = new URL('../wasm-pkg/primer_calc_wasm.js', import.meta.url).href;
     const backend = await loadWasmBackend({ url });
     expect(backend?.name).toBe('wasm');
   });

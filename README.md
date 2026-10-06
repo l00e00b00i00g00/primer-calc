@@ -1,7 +1,12 @@
 # 🧬 `@sfstudio_tools/primer-calc`
 
+[![npm version](https://badge.fury.io/js/@sfstudio_tools%2Fprimer-calc.svg)](https://www.npmjs.com/package/@sfstudio_tools/primer-calc)
+[![CI](https://github.com/l00e00b00i00g00/primer-calc/actions/workflows/ci.yml/badge.svg)](https://github.com/l00e00b00i00g00/primer-calc/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
+
 Bibliothèque TypeScript open source (licence **Apache 2.0**) de référence pour l'analyse,
-l'optimisation et la thermodynamique des amorces (*primers*) et sondes oligonucléotidiques.
+l'optimisation et la thermodynamique des amorces (_primers_) et sondes oligonucléotidiques.
 
 ## 📥 Installation
 
@@ -38,9 +43,9 @@ sans erreur de compilation TypeScript. Voir `examples/quickstart.ts`
 import { PrimerAnalyzer, MultiplexPool } from '@sfstudio_tools/primer-calc';
 
 const analyzer = new PrimerAnalyzer({
-  na_conc: 50,      // mM
-  mg_conc: 2.5,     // mM (correction de von Ahsen)
-  dNTPs_conc: 0.8,  // mM (total des 4 dNTP)
+  na_conc: 50, // mM
+  mg_conc: 2.5, // mM (correction de von Ahsen)
+  dNTPs_conc: 0.8, // mM (total des 4 dNTP)
   primer_conc: 200, // nM
   temp_unit: 'C',
 });
@@ -122,6 +127,7 @@ npm run build:wasm   # Rust → wasm-pkg/ (cibles Node.js + navigateurs)
 ```
 
 Jeux de validation :
+
 - exemple duplex SantaLucia 1998 (`CGTTGA` : ΔH −40.9, ΔS −114.6) et
   ΔG°37 SantaLucia & Hicks 2004 ;
 - table dangling ends Bommarito et al. 2000 ;

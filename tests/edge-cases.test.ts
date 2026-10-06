@@ -92,22 +92,14 @@ describe('conditions validation', () => {
   });
 
   it('rejects unknown salt methods and temperature units', () => {
-    expect(() =>
-      resolveConditions({ salt_method: 'owczarzy' as never }),
-    ).toThrow(RangeError);
-    expect(() => resolveConditions({ temp_unit: 'K' as never })).toThrow(
-      RangeError,
-    );
+    expect(() => resolveConditions({ salt_method: 'owczarzy' as never })).toThrow(RangeError);
+    expect(() => resolveConditions({ temp_unit: 'K' as never })).toThrow(RangeError);
   });
 
   it('rejects non-numeric, NaN and out-of-range conditions', () => {
-    expect(() => resolveConditions({ na_conc: 'x' as never })).toThrow(
-      RangeError,
-    );
+    expect(() => resolveConditions({ na_conc: 'x' as never })).toThrow(RangeError);
     expect(() => resolveConditions({ primer_conc: NaN })).toThrow(RangeError);
-    expect(() => resolveConditions({ eval_temp_c: -300 })).toThrow(
-      RangeError,
-    );
+    expect(() => resolveConditions({ eval_temp_c: -300 })).toThrow(RangeError);
   });
 });
 
@@ -120,11 +112,7 @@ describe('astronomical degeneracy', () => {
     expect(a.degeneracy.variantsEnumerated).toBeLessThanOrEqual(4096);
     expect(a.tm).toBe(b.tm);
     expect(a.degeneracy.tmWeighted).toBe(b.degeneracy.tmWeighted);
-    expect(a.degeneracy.tmMin as number).toBeLessThanOrEqual(
-      a.degeneracy.tmWeighted as number,
-    );
-    expect(a.degeneracy.tmWeighted as number).toBeLessThanOrEqual(
-      a.degeneracy.tmMax as number,
-    );
+    expect(a.degeneracy.tmMin as number).toBeLessThanOrEqual(a.degeneracy.tmWeighted as number);
+    expect(a.degeneracy.tmWeighted as number).toBeLessThanOrEqual(a.degeneracy.tmMax as number);
   });
 });

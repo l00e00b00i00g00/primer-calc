@@ -1,16 +1,9 @@
-import type {
-  CrossDimerizationResult,
-  PcrConditions,
-  PoolPrimer,
-} from './types.js';
+import type { CrossDimerizationResult, PcrConditions, PoolPrimer } from './types.js';
 import type { ComputeBackend as Backend } from './backend/backend.js';
 import { TypeScriptBackend } from './backend/backend.js';
 import { resolveConditions } from './PrimerAnalyzer.js';
 import { crossDimerizationMatrix } from './multiplex/pool.js';
-import {
-  crossDimerizationParallel,
-  type ParallelOptions,
-} from './multiplex/parallel.js';
+import { crossDimerizationParallel, type ParallelOptions } from './multiplex/parallel.js';
 import { normalizeSequence } from './sequence/validate.js';
 
 /**
@@ -48,9 +41,7 @@ export class MultiplexPool {
   }
 
   /** N×N cross-dimerization scan under the given PCR conditions. */
-  evaluateCrossDimerization(
-    conditions: PcrConditions = {},
-  ): CrossDimerizationResult {
+  evaluateCrossDimerization(conditions: PcrConditions = {}): CrossDimerizationResult {
     const cond = resolveConditions(conditions);
     return crossDimerizationMatrix(this.primers, cond, this.backend);
   }

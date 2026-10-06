@@ -1,7 +1,4 @@
-import type {
-  DimerResult,
-  ResolvedConditions,
-} from '../types.js';
+import type { DimerResult, ResolvedConditions } from '../types.js';
 import type { DuplexFlanks } from '../thermo/nearest-neighbor.js';
 import { R_CAL, ZERO_C_KELVIN } from '../constants.js';
 import { gibbsFreeEnergy, tmSelfComplementary } from '../thermo/gibbs.js';
@@ -57,12 +54,7 @@ export function bestDimer(
   );
 
   let best: DimerResult = none;
-  const consider = (
-    top: string,
-    bottom: string,
-    aStart: number,
-    bStartRev: number,
-  ) => {
+  const consider = (top: string, bottom: string, aStart: number, bStartRev: number) => {
     const paired = countPaired(top, bottom);
     if (paired < 2) return;
     const len = top.length;
@@ -73,12 +65,7 @@ export function bestDimer(
     if (bStartRev + len < brev.length) {
       flanks.bottom5 = brev[bStartRev + len] as string;
     }
-    const { dH, dS } = alignmentThermodynamics(
-      top,
-      bottom,
-      selfComplementary,
-      flanks,
-    );
+    const { dH, dS } = alignmentThermodynamics(top, bottom, selfComplementary, flanks);
     const dG = gibbsFreeEnergy(dH, dS, cond.eval_temp_c);
     // 3′ runs on the gapped depiction: top is 5′→3′ (3′ end = right),
     // bottom is 3′→5′ (3′ end = left). Runs stop at mismatches/boundaries.
@@ -149,10 +136,8 @@ export function bestDimer(
       const gapA = right.aStart - (left.aStart + left.length);
       const gapB = right.bStartRev - (left.bStartRev + left.length);
       if (gapA === 1 && gapB === 1) {
-        const top =
-          left.top + A[left.aStart + left.length] + right.top;
-        const bottom =
-          left.bottom + brev[left.bStartRev + left.length] + right.bottom;
+        const top = left.top + A[left.aStart + left.length] + right.top;
+        const bottom = left.bottom + brev[left.bStartRev + left.length] + right.bottom;
         consider(top, bottom, left.aStart, left.bStartRev);
       }
     }
@@ -170,13 +155,9 @@ function dimerTm(
   const ctM = primerConcToMolar(cond.primer_conc);
   const saltAdj =
     cond.salt_method === 'vonAhsen'
-      ? saltAdjustmentCelsius(
-          sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc),
-        )
+      ? saltAdjustmentCelsius(sodiumEquivalent(cond.na_conc, cond.mg_conc, cond.dNTPs_conc))
       : 0;
-  const concTerm = selfComplementary
-    ? R_CAL * Math.log(ctM)
-    : R_CAL * Math.log(ctM / 2);
+  const concTerm = selfComplementary ? R_CAL * Math.log(ctM) : R_CAL * Math.log(ctM / 2);
   void concTerm;
   // Homo path reuses the reference two-state self-complementary formula.
   let tm = selfComplementary

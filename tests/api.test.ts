@@ -41,22 +41,16 @@ describe('PrimerAnalyzer (spec §4)', () => {
   });
 
   it('flags a critical GC hairpin', () => {
-    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate(
-      'GCGCGCGCTATGCGCGCGC',
-    );
+    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate('GCGCGCGCTATGCGCGCGC');
     expect(result.hasRisks).toBe(true);
     expect(
-      result.warnings.some(
-        (w) => w.code === 'STABLE_HAIRPIN' && w.severity === 'critical',
-      ),
+      result.warnings.some((w) => w.code === 'STABLE_HAIRPIN' && w.severity === 'critical'),
     ).toBe(true);
   });
 
   it('grades a weaker hairpin at warning level', () => {
     // 7-bp GC stem: ΔG°37 in the (−9, −6] window.
-    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate(
-      'GCGCGCGTATCGCGCGC',
-    );
+    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate('GCGCGCGTATCGCGCGC');
     const hit = result.warnings.find((w) => w.code === 'STABLE_HAIRPIN');
     expect(hit?.severity).toBe('warning');
   });
@@ -71,28 +65,20 @@ describe('PrimerAnalyzer (spec §4)', () => {
   it('flags a critical palindromic homodimer', () => {
     const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate('GCGCGCGC');
     expect(
-      result.warnings.some(
-        (w) => w.code === 'STABLE_HOMODIMER' && w.severity === 'critical',
-      ),
+      result.warnings.some((w) => w.code === 'STABLE_HOMODIMER' && w.severity === 'critical'),
     ).toBe(true);
     expect(result.hasRisks).toBe(true);
   });
 
   it('flags an over-stable 3′ end', () => {
-    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate(
-      'ATATATATATATATATGGGGG',
-    );
+    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate('ATATATATATATATATGGGGG');
     expect(result.warnings.some((w) => w.code === 'STABLE_3P_END')).toBe(true);
   });
 
   it('flags a critically stable 3′ end', () => {
-    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate(
-      'ATATATATATATATATGCGCG',
-    );
+    const result = new PrimerAnalyzer(SPEC_CONDITIONS).evaluate('ATATATATATATATATGCGCG');
     expect(
-      result.warnings.some(
-        (w) => w.code === 'STABLE_3P_END' && w.severity === 'critical',
-      ),
+      result.warnings.some((w) => w.code === 'STABLE_3P_END' && w.severity === 'critical'),
     ).toBe(true);
   });
 
@@ -151,9 +137,7 @@ describe('MultiplexPool (spec §4)', () => {
     // The (ATCG)n repeat slips into a stable shifted homodimer → conflict.
     expect(crossCheck.hasCrossDimers).toBe(true);
     expect(crossCheck.conflicts.length).toBeGreaterThan(0);
-    expect(
-      crossCheck.conflicts.every((c) => c.deltaG <= -6),
-    ).toBe(true);
+    expect(crossCheck.conflicts.every((c) => c.deltaG <= -6)).toBe(true);
   });
 
   it('detects cross-dimerization between complementary primers', () => {
@@ -194,8 +178,7 @@ describe('MultiplexPool (spec §4)', () => {
     expect(crossCheck.hasCrossDimers).toBe(true);
     const hit = crossCheck.conflicts.find(
       (c) =>
-        (c.primerA === 'pa' && c.primerB === 'pt') ||
-        (c.primerA === 'pt' && c.primerB === 'pa'),
+        (c.primerA === 'pa' && c.primerB === 'pt') || (c.primerA === 'pt' && c.primerB === 'pa'),
     );
     expect(hit?.severity).toBe('critical');
     expect(hit?.threePrimeAnchored).toBe(true);
@@ -209,16 +192,12 @@ describe('MultiplexPool (spec §4)', () => {
     ]);
     const crossCheck = pool.evaluateCrossDimerization(SPEC_CONDITIONS);
     expect(crossCheck.hasCrossDimers).toBe(true);
-    expect(
-      crossCheck.conflicts.every((c) => c.severity === 'warning'),
-    ).toBe(true);
+    expect(crossCheck.conflicts.every((c) => c.severity === 'warning')).toBe(true);
   });
 
   it('does not escalate non-anchored dimers via the 3′ rule', () => {
     // Central-block homodimer: stable (≤ −6) but not 3′-anchored.
-    const pool = new MultiplexPool([
-      { id: 'central', seq: 'CCATATATATATATCC' },
-    ]);
+    const pool = new MultiplexPool([{ id: 'central', seq: 'CCATATATATATATCC' }]);
     const crossCheck = pool.evaluateCrossDimerization(SPEC_CONDITIONS);
     expect(crossCheck.hasCrossDimers).toBe(true);
     const hit = crossCheck.conflicts.find((c) => c.primerA === 'central');
@@ -229,12 +208,10 @@ describe('MultiplexPool (spec §4)', () => {
   it('validates pool construction', () => {
     expect(() => new MultiplexPool([])).toThrow();
     expect(() => new MultiplexPool('nope' as never)).toThrow();
-    expect(
-      () => new MultiplexPool([{ id: 42 as never, seq: 'ATGCATGC' }]),
-    ).toThrow(/non-empty string id/);
-    expect(() => new MultiplexPool([{ id: '', seq: 'ATGCATGC' }])).toThrow(
+    expect(() => new MultiplexPool([{ id: 42 as never, seq: 'ATGCATGC' }])).toThrow(
       /non-empty string id/,
     );
+    expect(() => new MultiplexPool([{ id: '', seq: 'ATGCATGC' }])).toThrow(/non-empty string id/);
     expect(
       () =>
         new MultiplexPool([
@@ -242,8 +219,6 @@ describe('MultiplexPool (spec §4)', () => {
           { id: 'x', seq: 'ATGCATGC' },
         ]),
     ).toThrow(/Duplicate primer id/);
-    expect(
-      () => new MultiplexPool([{ id: 'bad', seq: 'ATGCX' }]),
-    ).toThrow(PrimerValidationError);
+    expect(() => new MultiplexPool([{ id: 'bad', seq: 'ATGCX' }])).toThrow(PrimerValidationError);
   });
 });

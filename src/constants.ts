@@ -64,10 +64,7 @@ export const SYMMETRY_DS = -1.4;
  * @param bottom3 two bottom-strand bases, 3' → 5' (e.g. `"GT"`).
  * @returns `{ dH, dS }` or `null` when the step is not a Watson–Crick step.
  */
-export function nnParams(
-  top5: string,
-  bottom3: string,
-): { dH: number; dS: number } | null {
+export function nnParams(top5: string, bottom3: string): { dH: number; dS: number } | null {
   const t = top5.toUpperCase();
   const b = bottom3.toUpperCase();
   const direct = NN_DH[`${t}/${b}`];

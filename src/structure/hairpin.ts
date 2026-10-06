@@ -57,15 +57,9 @@ export function bestHairpin(seq: string, evalTempC: number): HairpinResult {
         if (loopStart + loopLen + k < n) {
           flanks.bottom3 = s[loopStart + loopLen + k] as string;
         }
-        const { dH, dS } = alignmentThermodynamics(
-          fiveArm,
-          bottom,
-          false,
-          flanks,
-        );
+        const { dH, dS } = alignmentThermodynamics(fiveArm, bottom, false, flanks);
         const loop = hairpinLoopParams(loopLen);
-        const dG =
-          dH + loop.dH - ((evalTempC + 273.15) * (dS + loop.dS)) / 1000;
+        const dG = dH + loop.dH - ((evalTempC + 273.15) * (dS + loop.dS)) / 1000;
         if (best.deltaG === null || dG < best.deltaG) {
           best = { found: true, deltaG: dG, stemLength: k, loopLength: loopLen };
         }

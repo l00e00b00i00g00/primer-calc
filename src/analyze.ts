@@ -29,9 +29,6 @@ export function calculateTm(seq: string, conditions: PcrConditions = {}): number
  * const analysis = analyzePrimer('ATGCGTAGCTAGCTAGCTA');
  * ```
  */
-export function analyzePrimer(
-  seq: string,
-  conditions: PcrConditions = {},
-): PrimerAnalysis {
+export function analyzePrimer(seq: string, conditions: PcrConditions = {}): PrimerAnalysis {
   return new PrimerAnalyzer(conditions).evaluate(seq);
 }

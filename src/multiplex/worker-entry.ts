@@ -5,10 +5,7 @@
  * `postMessage` host exists, so it stays inert under Node.js. Pairs are
  * scored with the same bundled engine as the main thread.
  */
-import {
-  handleWorkerMessage,
-  type WorkerRequest,
-} from './webworker.js';
+import { handleWorkerMessage, type WorkerRequest } from './webworker.js';
 
 const scope = globalThis as unknown as {
   onmessage?: ((event: { data: WorkerRequest }) => void) | null;

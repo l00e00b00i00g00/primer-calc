@@ -1,11 +1,7 @@
 import { R_CAL, ZERO_C_KELVIN } from '../constants.js';
 
 /** ΔG° (kcal/mol) = ΔH° − T·ΔS°, with T in Kelvin. */
-export function gibbsFreeEnergy(
-  dH_kcal: number,
-  dS_cal: number,
-  tempCelsius: number,
-): number {
+export function gibbsFreeEnergy(dH_kcal: number, dS_cal: number, tempCelsius: number): number {
   const tK = tempCelsius + ZERO_C_KELVIN;
   return dH_kcal - (tK * dS_cal) / 1000;
 }

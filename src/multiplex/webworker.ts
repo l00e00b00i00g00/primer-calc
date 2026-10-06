@@ -1,9 +1,5 @@
 import { bestDimer } from '../structure/dimer.js';
-import type {
-  DimerResult,
-  PoolPrimer,
-  ResolvedConditions,
-} from '../types.js';
+import type { DimerResult, PoolPrimer, ResolvedConditions } from '../types.js';
 import { assembleCrossDimerization } from './pool.js';
 
 /** One pair scored inside a worker: indices, sequences, self-pair flag. */
@@ -43,11 +39,7 @@ export const DEFAULT_WEB_WORKERS = 4;
  * (`src/multiplex/worker-entry.ts` → `dist/worker.js`) and hosts.
  */
 export function handleWorkerMessage(data: WorkerRequest): WorkerResponse {
-  return data.pairs.map(([i, j, a, b, self]) => [
-    i,
-    j,
-    bestDimer(a, b, data.cond, self),
-  ]);
+  return data.pairs.map(([i, j, a, b, self]) => [i, j, bestDimer(a, b, data.cond, self)]);
 }
 
 /**
@@ -66,26 +58,15 @@ export async function crossDimerizationWebWorkers(
   workerUrl: string | URL,
   opts: WebWorkerOptions = {},
   spawn: (url: string | URL) => WebWorkerLike,
-): Promise<
-  import('../types.js').CrossDimerizationResult
-> {
+): Promise<import('../types.js').CrossDimerizationResult> {
   const n = primers.length;
   const pairs: WorkerPair[] = [];
   for (let i = 0; i < n; i++) {
     for (let j = i; j < n; j++) {
-      pairs.push([
-        i,
-        j,
-        (primers[i] as PoolPrimer).seq,
-        (primers[j] as PoolPrimer).seq,
-        i === j,
-      ]);
+      pairs.push([i, j, (primers[i] as PoolPrimer).seq, (primers[j] as PoolPrimer).seq, i === j]);
     }
   }
-  const workerCount = Math.max(
-    1,
-    Math.min(opts.workers ?? DEFAULT_WEB_WORKERS, pairs.length),
-  );
+  const workerCount = Math.max(1, Math.min(opts.workers ?? DEFAULT_WEB_WORKERS, pairs.length));
   const timeoutMs = opts.timeoutMs ?? 120000;
   const chunks: WorkerPair[][] = Array.from({ length: workerCount }, () => []);
   pairs.forEach((p, k) => {
@@ -113,9 +94,7 @@ export async function crossDimerizationWebWorkers(
     });
 
   const settled = await Promise.all(chunks.map(runChunk));
-  const pairResults = settled
-    .flat()
-    .map(([i, j, dimer]) => ({ i, j, dimer }));
+  const pairResults = settled.flat().map(([i, j, dimer]) => ({ i, j, dimer }));
   return assembleCrossDimerization(
     primers.map((p) => p.id),
     pairResults,

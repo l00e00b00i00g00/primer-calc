@@ -16,10 +16,7 @@ import {
 } from './constants.js';
 import { normalizeSequence } from './sequence/validate.js';
 import { gcContent } from './sequence/gc.js';
-import {
-  analyzeDegeneracy,
-  canonicalVariant,
-} from './sequence/degenerate.js';
+import { analyzeDegeneracy, canonicalVariant } from './sequence/degenerate.js';
 import { toUnit } from './thermo/tm.js';
 
 function finiteNumber(
@@ -31,8 +28,7 @@ function finiteNumber(
   const v = value ?? fallback;
   if (typeof v !== 'number' || !Number.isFinite(v) || v < min) {
     throw new RangeError(
-      `Invalid PCR condition ${name}=${String(value)}: ` +
-        `expected a finite number ≥ ${min}.`,
+      `Invalid PCR condition ${name}=${String(value)}: ` + `expected a finite number ≥ ${min}.`,
     );
   }
   return v;
@@ -50,19 +46,13 @@ export function resolveConditions(input: PcrConditions = {}): ResolvedConditions
   const temp_unit = input.temp_unit ?? DEFAULT_CONDITIONS.temp_unit;
   if (temp_unit !== 'C' && temp_unit !== 'F') {
     throw new RangeError(
-      `Invalid PCR condition temp_unit=${String(input.temp_unit)}: ` +
-        `expected 'C' or 'F'.`,
+      `Invalid PCR condition temp_unit=${String(input.temp_unit)}: ` + `expected 'C' or 'F'.`,
     );
   }
   return {
     na_conc: finiteNumber(input.na_conc, DEFAULT_CONDITIONS.na_conc, 'na_conc', 0),
     mg_conc: finiteNumber(input.mg_conc, DEFAULT_CONDITIONS.mg_conc, 'mg_conc', 0),
-    dNTPs_conc: finiteNumber(
-      input.dNTPs_conc,
-      DEFAULT_CONDITIONS.dNTPs_conc,
-      'dNTPs_conc',
-      0,
-    ),
+    dNTPs_conc: finiteNumber(input.dNTPs_conc, DEFAULT_CONDITIONS.dNTPs_conc, 'dNTPs_conc', 0),
     primer_conc: finiteNumber(
       input.primer_conc,
       DEFAULT_CONDITIONS.primer_conc,
@@ -108,11 +98,8 @@ export class PrimerAnalyzer {
     const sequence = normalizeSequence(input);
     const cond = this.conditions;
     const warnings: AnalysisWarning[] = [];
-    const push = (
-      code: string,
-      severity: AnalysisWarning['severity'],
-      message: string,
-    ) => warnings.push({ code, severity, message });
+    const push = (code: string, severity: AnalysisWarning['severity'], message: string) =>
+      warnings.push({ code, severity, message });
 
     const length = sequence.length;
     const gc = gcContent(sequence);
@@ -153,11 +140,8 @@ export class PrimerAnalyzer {
         `GC content ${gc.toFixed(1)}% outside the recommended 30–70% range.`,
       );
     }
-    const tmCForRange = degeneracy.isDegenerate
-      ? (degeneracy.tmWeighted as number)
-      : tmC;
-    const tmInC =
-      cond.temp_unit === 'F' ? ((tmCForRange - 32) / 1.8) : tmCForRange;
+    const tmCForRange = degeneracy.isDegenerate ? (degeneracy.tmWeighted as number) : tmC;
+    const tmInC = cond.temp_unit === 'F' ? (tmCForRange - 32) / 1.8 : tmCForRange;
     if (tmInC < 50 || tmInC > 68) {
       push(
         'TM_OUT_OF_RANGE',
@@ -195,8 +179,7 @@ export class PrimerAnalyzer {
         push(
           'STABLE_HOMODIMER',
           'critical',
-          `Stable homodimer ΔG=${homodimer.deltaG.toFixed(2)} kcal/mol ` +
-            'may inhibit PCR.',
+          `Stable homodimer ΔG=${homodimer.deltaG.toFixed(2)} kcal/mol ` + 'may inhibit PCR.',
         );
       } else if (homodimer.deltaG <= WARNING_DG) {
         push(

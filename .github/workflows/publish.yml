@@ -1,0 +1,39 @@
+name: Publish
+
+# One-time npmjs.com setup per package (retained from manual publish):
+# package Settings → Publishing → Trusted publisher → GitHub Actions,
+# organization/user l00e00b00i00g00, repository primer-calc.
+# Afterwards no token is needed: provenance is minted via OIDC.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # OIDC trusted publishing (no long-lived token)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          registry-url: https://registry.npmjs.org
+      - name: Modern npm (OIDC support)
+        run: npm install -g npm@latest
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-bindgen CLI
+        run: cargo install wasm-bindgen-cli --locked
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify (typecheck, build, tests)
+        run: npm run typecheck && npm run build && npm run build:wasm && npm test
+      - name: Publish WASM subpackage
+        run: npm publish ./wasm-pkg --provenance --access public
+      - name: Publish library
+        run: npm publish --provenance --access public

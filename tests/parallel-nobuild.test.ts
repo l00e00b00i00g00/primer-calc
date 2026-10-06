@@ -10,8 +10,6 @@ describe('parallel evaluation without a bundle', () => {
   it('throws a clear build-first error', async () => {
     const { MultiplexPool } = await import('../src/MultiplexPool.js');
     const pool = new MultiplexPool([{ id: 'a', seq: 'ATGCATGCATGC' }]);
-    await expect(pool.evaluateCrossDimerizationParallel()).rejects.toThrow(
-      /built bundle/,
-    );
+    await expect(pool.evaluateCrossDimerizationParallel()).rejects.toThrow(/built bundle/);
   });
 });

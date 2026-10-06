@@ -6,9 +6,7 @@ import { meltingTemperature, toUnit } from '../thermo/tm.js';
 export const MAX_VARIANTS_ENUMERATED = 4096;
 
 /** Exact odometer enumeration (no index arithmetic: safe for any D ≤ cap). */
-function* odometer(
-  pools: readonly (readonly string[])[],
-): Generator<string> {
+function* odometer(pools: readonly (readonly string[])[]): Generator<string> {
   const idx = new Array<number>(pools.length).fill(0);
   for (;;) {
     yield pools.map((p, i) => p[idx[i] as number] as string).join('');
@@ -57,9 +55,7 @@ export function* enumerateVariants(seq: string): Generator<string> {
   const rand = mulberry32(0x1a2b3c4d);
   const seen = new Set<string>();
   while (seen.size < MAX_VARIANTS_ENUMERATED) {
-    const v = pools
-      .map((p) => p[Math.floor(rand() * p.length)] as string)
-      .join('');
+    const v = pools.map((p) => p[Math.floor(rand() * p.length)] as string).join('');
     if (!seen.has(v)) {
       seen.add(v);
       yield v;
@@ -75,10 +71,7 @@ export function* enumerateVariants(seq: string): Generator<string> {
  * (exhaustive when D ≤ 4096, else a deterministic sample); min/max bound the
  * observed stability range.
  */
-export function analyzeDegeneracy(
-  seq: string,
-  cond: ResolvedConditions,
-): DegeneracyInfo {
+export function analyzeDegeneracy(seq: string, cond: ResolvedConditions): DegeneracyInfo {
   const factor = degeneracyFactor(seq);
   const isDegenerate = factor > 1;
   if (!isDegenerate) {

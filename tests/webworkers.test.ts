@@ -45,17 +45,11 @@ const PRIMERS = [
 describe('browser worker orchestration (fake transport)', () => {
   it('matches the synchronous report exactly', async () => {
     const spawned: FakeWorker[] = [];
-    const r = await crossDimerizationWebWorkers(
-      PRIMERS,
-      cond,
-      PRIMER_URL,
-      { workers: 2 },
-      (u) => {
-        const w = new FakeWorker(u);
-        spawned.push(w);
-        return w;
-      },
-    );
+    const r = await crossDimerizationWebWorkers(PRIMERS, cond, PRIMER_URL, { workers: 2 }, (u) => {
+      const w = new FakeWorker(u);
+      spawned.push(w);
+      return w;
+    });
     expect(r).toEqual(crossDimerizationMatrix(PRIMERS, cond));
     expect(r.hasCrossDimers).toBe(true);
     expect(spawned.length).toBe(2);
@@ -99,8 +93,7 @@ describe('browser worker orchestration (fake transport)', () => {
 
 const distWorker = new URL('../dist/worker.js', import.meta.url);
 const distBuilt =
-  existsSync(distWorker) &&
-  existsSync(new URL('../dist/index.cjs', import.meta.url));
+  existsSync(distWorker) && existsSync(new URL('../dist/index.cjs', import.meta.url));
 
 describe('worker entry wiring (src)', () => {
   it('arms onmessage only when a postMessage host exists', async () => {
@@ -135,8 +128,7 @@ describe.runIf(distBuilt)('shipped dist/worker.js bundle', () => {
       postMessage?: (message: unknown) => void;
     };
     const prevOnmessage: Handler | null | undefined = g.onmessage;
-    const prevPostMessage: ((message: unknown) => void) | undefined =
-      g.postMessage;
+    const prevPostMessage: ((message: unknown) => void) | undefined = g.postMessage;
     const posted: unknown[] = [];
     g.postMessage = (message: unknown) => {
       posted.push(message);
@@ -152,13 +144,9 @@ describe.runIf(distBuilt)('shipped dist/worker.js bundle', () => {
         },
       });
       expect(posted).toHaveLength(1);
-      const first = (posted[0] as Array<
-        [number, number, import('../src/types.js').DimerResult]
-      >)[0] as unknown as [
-        number,
-        number,
-        import('../src/types.js').DimerResult | undefined,
-      ];
+      const first = (
+        posted[0] as Array<[number, number, import('../src/types.js').DimerResult]>
+      )[0] as unknown as [number, number, import('../src/types.js').DimerResult | undefined];
       const [i, j, dimer] = first;
       expect(i).toBe(0);
       expect(j).toBe(0);

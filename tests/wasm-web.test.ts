@@ -1,20 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import {
-  WasmBackend,
-  initWasmModule,
-  loadWasmBackendWeb,
-} from '../src/backend/wasm.js';
+import { WasmBackend, initWasmModule, loadWasmBackendWeb } from '../src/backend/wasm.js';
 import { TypeScriptBackend } from '../src/backend/backend.js';
 import { resolveConditions } from '../src/PrimerAnalyzer.js';
 import type { WasmDimerModule } from '../src/backend/wasm.js';
 
 const cond = resolveConditions({});
 const wasmUrl = new URL('../wasm-pkg/web/primer_calc_wasm.js', import.meta.url);
-const wasmBin = new URL(
-  '../wasm-pkg/web/primer_calc_wasm_bg.wasm',
-  import.meta.url,
-);
+const wasmBin = new URL('../wasm-pkg/web/primer_calc_wasm_bg.wasm', import.meta.url);
 
 async function webBackend(): Promise<WasmBackend> {
   const glue = (await import(wasmUrl.href)) as unknown as {
@@ -36,18 +29,15 @@ describe('web-target WASM binary (real module, bytes init)', () => {
       ['AAAA', 'CCCC', false], // no dimer
     ];
     for (const [a, b, self] of pairs) {
-      const expected = self
-        ? ts.homodimer(a, cond)
-        : ts.heterodimer(a, b, cond);
-      const actual = self
-        ? wasm.homodimer(a, cond)
-        : wasm.heterodimer(a, b, cond);
+      const expected = self ? ts.homodimer(a, cond) : ts.heterodimer(a, b, cond);
+      const actual = self ? wasm.homodimer(a, cond) : wasm.heterodimer(a, b, cond);
       expect(actual).toEqual(expected);
     }
   });
 });
 
-describe('initWasmModule', () => {  it('initializes modules exposing the async default initializer', async () => {
+describe('initWasmModule', () => {
+  it('initializes modules exposing the async default initializer', async () => {
     let initialized = false;
     const stub = {
       dimer_report_json: () => '{"found":false}',
@@ -73,8 +63,7 @@ describe('initWasmModule', () => {  it('initializes modules exposing the async d
 
 describe('loadWasmBackendWeb', () => {
   it('loads and instantiates the web glue end to end', async () => {
-    const glue = new URL('../wasm-pkg/web/primer_calc_wasm.js', import.meta.url)
-      .href;
+    const glue = new URL('../wasm-pkg/web/primer_calc_wasm.js', import.meta.url).href;
     const backend = await loadWasmBackendWeb(glue);
     expect(backend.name).toBe('wasm');
     const d = backend.homodimer('GCGCGCGC', cond);

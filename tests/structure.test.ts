@@ -31,9 +31,7 @@ describe('bestHairpin', () => {
   it('prefers longer, GC-rich stems', () => {
     const weak = bestHairpin('AAAATTTTAAAATTTTAAAA', 37);
     const strong = bestHairpin('GCGCGCGCTATGCGCGCGC', 37);
-    expect((strong.deltaG as number)).toBeLessThan(
-      (weak.deltaG as number) ?? Infinity,
-    );
+    expect(strong.deltaG as number).toBeLessThan((weak.deltaG as number) ?? Infinity);
   });
 });
 
@@ -87,7 +85,7 @@ describe('bestDimer', () => {
     const d = bestDimer('AAAAAAAAAAAA', 'TTTTTTTTTTTT', nosalt, false);
     expect(d.found).toBe(true);
     expect(d.tm as number).toBeGreaterThan(
-      (bestDimer('AAAAAAAAAAAA', 'TTTTTTTTTTTT', cond, false).tm as number),
+      bestDimer('AAAAAAAAAAAA', 'TTTTTTTTTTTT', cond, false).tm as number,
     );
   });
 
@@ -97,9 +95,7 @@ describe('bestDimer', () => {
     const perfect = bestDimer('GCGCGCGC', 'GCGCGCGC', cond, true);
     const mismatch = bestDimer('GCGCACGC', 'GCGCGCGC', cond, false);
     expect(mismatch.found).toBe(true);
-    expect(mismatch.deltaG as number).toBeGreaterThan(
-      perfect.deltaG as number,
-    );
+    expect(mismatch.deltaG as number).toBeGreaterThan(perfect.deltaG as number);
   });
 
   it('reports run 0 when the block misses both 3′ termini', () => {

@@ -45,9 +45,7 @@ const MATCHED_COND = {
 describe('Primer3 cross-validation (frozen goldens)', () => {
   it('matches Primer3 Tm at matched engine conditions (≤ 2.5 °C)', () => {
     for (const [seq, expected] of Object.entries(G.matched_tm)) {
-      expect(
-        Math.abs(calculateTm(seq, MATCHED_COND) - expected),
-      ).toBeLessThanOrEqual(2.5);
+      expect(Math.abs(calculateTm(seq, MATCHED_COND) - expected)).toBeLessThanOrEqual(2.5);
     }
   });
 
@@ -62,26 +60,20 @@ describe('Primer3 cross-validation (frozen goldens)', () => {
     const cond = resolveConditions({});
     for (const [seq, expected] of Object.entries(G.homodimer_dg)) {
       const d = bestDimer(seq, seq, cond, true);
-      expect(Math.abs((d.deltaG as number) - expected)).toBeLessThanOrEqual(
-        1.5,
-      );
+      expect(Math.abs((d.deltaG as number) - expected)).toBeLessThanOrEqual(1.5);
     }
   });
 
   it('ranks primers identically to Primer3 under PCR conditions', () => {
     const entries = Object.entries(G.full_tm);
-    const ours = entries.map(
-      ([seq]) => [seq, calculateTm(seq)] as [string, number],
-    );
+    const ours = entries.map(([seq]) => [seq, calculateTm(seq)] as [string, number]);
     for (let i = 0; i < entries.length; i++) {
       for (let j = i + 1; j < entries.length; j++) {
         const refI = entries[i] as [string, number];
         const refJ = entries[j] as [string, number];
         const ourI = ours[i] as [string, number];
         const ourJ = ours[j] as [string, number];
-        expect(Math.sign(ourI[1] - ourJ[1])).toBe(
-          Math.sign(refI[1] - refJ[1]),
-        );
+        expect(Math.sign(ourI[1] - ourJ[1])).toBe(Math.sign(refI[1] - refJ[1]));
       }
     }
   });
