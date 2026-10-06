@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Enterprise & scientific-grade TypeScript library for primer/probe analysis: SantaLucia nearest-neighbor thermodynamics, secondary structures, multiplex cross-dimerization, IUPAC degeneracy.",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

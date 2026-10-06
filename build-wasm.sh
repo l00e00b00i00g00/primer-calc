@@ -27,6 +27,7 @@ const pkg = {
   version: require(root + '/package.json').version,
   description: 'Compiled Rust/WASM dimer engine for @synthflow/primer-calc.',
   license: 'Apache-2.0',
+  publishConfig: { access: 'public' },
   type: 'module',
   main: './primer_calc_wasm.js',
   types: './primer_calc_wasm.d.ts',
