@@ -13,6 +13,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false # full signal on every runner, never hide green jobs
       matrix:
         os: [ubuntu-latest, macos-latest]
         node: ['18.x', '20.x', '22.x']
@@ -46,6 +47,8 @@ jobs:
         run: npm audit || true
       - name: Build TypeScript
         run: npm run build
+      - name: Snapshot committed wasm-pkg
+        run: cp -r wasm-pkg /tmp/wasm-pkg.committed
       - name: Build WASM core
         run: npm run build:wasm
       - name: Verify committed wasm-pkg matches sources (functional)
@@ -54,7 +57,6 @@ jobs:
         # bit-identical engine outputs on a fixed battery, then restore the
         # committed artifacts untouched.
         run: |
-          cp -r wasm-pkg /tmp/wasm-pkg.committed
           node scripts/check-wasm-equivalence.mjs /tmp/wasm-pkg.committed ./wasm-pkg
           rm -rf wasm-pkg && cp -r /tmp/wasm-pkg.committed wasm-pkg
           git diff --exit-code -- wasm-pkg/
