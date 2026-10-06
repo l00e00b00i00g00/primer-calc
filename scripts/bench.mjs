@@ -7,8 +7,9 @@
  *   node scripts/bench.mjs --write-baseline # (re)write bench-baseline.json
  *   node scripts/bench.mjs --check          # fail if any op is >5x baseline
  *
- * The 5x margin only catches catastrophic regressions, never machine
- * noise — it is a smoke signal, not a performance gate.
+ * Compare runs on the SAME machine only: absolute timings vary wildly
+ * across hardware (CI runners are ~7x slower than dev laptops), so
+ * --check is a local before/after tool, deliberately NOT a CI gate.
  */
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 

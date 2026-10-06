@@ -74,8 +74,6 @@ jobs:
           --pack /tmp/sfstudio_tools-primer-calc-*.tgz
       - name: Size budgets
         run: node scripts/check-size.mjs
-      - name: Bench smoke (5x baselines)
-        run: node scripts/bench.mjs --check
 
   changesets:
     # Advisory: PRs changing the package should carry a changeset.

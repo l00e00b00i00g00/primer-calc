@@ -7,7 +7,7 @@ Requirements: Node.js ≥ 18. Rust toolchain optional (WASM core only).
 ```bash
 npm ci
 npm run build        # TypeScript → dist/ (+ dist/worker.js)
-npm test             # 184 Vitest tests
+npm test             # 188 Vitest tests
 npm run test:coverage  # build + 100% coverage gate (lines/functions/branches)
 ```
 

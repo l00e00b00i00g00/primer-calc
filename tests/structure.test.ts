@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { bestHairpin } from '../src/structure/hairpin.js';
 import { bestDimer } from '../src/structure/dimer.js';
 import { tracebackBestAlignment } from '../src/structure/dp-align.js';
+import { PrimerValidationError } from '../src/sequence/validate.js';
 import { analyzeThreePrime } from '../src/bias/threePrime.js';
 import { resolveConditions } from '../src/PrimerAnalyzer.js';
 
@@ -161,6 +162,14 @@ describe('tracebackBestAlignment (thermodynamic DP)', () => {
     expect(d.found).toBe(true);
     expect(d.pairedBases).toBe(7);
     expect(d.deltaG as number).toBeCloseTo(-10.8, 1);
+  });
+});
+
+describe('unambiguous-input contract', () => {
+  it('rejects degenerate IUPAC codes with a clear error', () => {
+    expect(() => bestDimer('ATGCRY', 'ATGCRY', cond, true)).toThrow(PrimerValidationError);
+    expect(() => bestHairpin('GCRCGCGC', 37)).toThrow(PrimerValidationError);
+    expect(() => tracebackBestAlignment('ATGN', 'ATGC', 37)).toThrow(PrimerValidationError);
   });
 });
 

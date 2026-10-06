@@ -12,7 +12,8 @@ export { analyzePrimerPair, PAIR_TM_TOLERANCE } from './pair.js';
 export { analyzeBatch } from './batch.js';
 export type { BatchInput, BatchResult } from './batch.js';
 
-export { PrimerValidationError } from './sequence/validate.js';
+export { PrimerValidationError, assertUnambiguous } from './sequence/validate.js';
+export { MIN_SEQUENCE_LENGTH, MAX_SEQUENCE_LENGTH } from './sequence/validate.js';
 export {
   IUPAC_BASES,
   IUPAC_COMPLEMENT,
@@ -21,12 +22,22 @@ export {
   degeneracyFactor,
   canPair,
   isWatsonCrickPair,
+  isIupacBase,
 } from './sequence/iupac.js';
 export { gcContent, atContent, baseCounts } from './sequence/gc.js';
-export { enumerateVariants, analyzeDegeneracy, canonicalVariant } from './sequence/degenerate.js';
+export {
+  enumerateVariants,
+  analyzeDegeneracy,
+  canonicalVariant,
+  MAX_VARIANTS_ENUMERATED,
+} from './sequence/degenerate.js';
 
-export { duplexThermodynamics, alignmentThermodynamics } from './thermo/nearest-neighbor.js';
-export type { DuplexFlanks } from './thermo/nearest-neighbor.js';
+export {
+  duplexThermodynamics,
+  alignmentThermodynamics,
+  BULGE_DG37,
+} from './thermo/nearest-neighbor.js';
+export type { DuplexFlanks, DuplexThermo } from './thermo/nearest-neighbor.js';
 export {
   sodiumEquivalent,
   saltAdjustmentCelsius,
@@ -34,15 +45,20 @@ export {
   owczarzySaltTm,
 } from './thermo/salt.js';
 export { gibbsFreeEnergy, tmTwoState, tmSelfComplementary } from './thermo/gibbs.js';
-export { meltingTemperature, dimerMeltingTemp } from './thermo/tm.js';
+export { meltingTemperature, dimerMeltingTemp, primerConcToMolar, toUnit } from './thermo/tm.js';
 
-export { bestHairpin } from './structure/hairpin.js';
-export { bestDimer, bestDimerAlignment } from './structure/dimer.js';
+export { bestHairpin, MIN_STEM, MIN_LOOP } from './structure/hairpin.js';
+export {
+  bestDimer,
+  bestDimerAlignment,
+  depictMerged,
+  ANCHORED_RUN_MIN,
+} from './structure/dimer.js';
 export type { DimerAlignment } from './structure/dimer.js';
 export { tracebackBestAlignment } from './structure/dp-align.js';
 export type { DpAlignment } from './structure/dp-align.js';
-export { analyzeThreePrime } from './bias/threePrime.js';
-export { crossDimerizationMatrix } from './multiplex/pool.js';
+export { analyzeThreePrime, THREE_PRIME_WINDOW } from './bias/threePrime.js';
+export { crossDimerizationMatrix, assembleCrossDimerization } from './multiplex/pool.js';
 export { crossDimerizationParallel } from './multiplex/parallel.js';
 export type { ParallelOptions } from './multiplex/parallel.js';
 export {
@@ -74,6 +90,9 @@ export {
   SYMMETRY_DS,
   CRITICAL_DG,
   WARNING_DG,
+  THREE_PRIME_DG_WARN,
+  THREE_PRIME_DG_CRITICAL,
+  DEGENERACY_WARN,
   OWCZARZY_2008,
   IMM_TABLE,
   TMM_TABLE,

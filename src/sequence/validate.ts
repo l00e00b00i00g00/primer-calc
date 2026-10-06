@@ -8,6 +8,25 @@ export class PrimerValidationError extends Error {
   }
 }
 
+/**
+ * Asserts a sequence contains only unambiguous ACGT bases (upper-cased).
+ * Structure engines (dimers, hairpins, alignments) require unambiguous
+ * input — degenerate IUPAC codes would silently corrupt NN lookups.
+ * Use `canonicalVariant()` first, or the analyzer/pool APIs which do it
+ * for you. Empty strings pass through (callers treat them as absent).
+ */
+export function assertUnambiguous(seq: string, caller: string): string {
+  const s = seq.toUpperCase();
+  if (s.length > 0 && !/^[ACGT]+$/.test(s)) {
+    throw new PrimerValidationError(
+      'AMBIGUOUS_SEQUENCE',
+      `${caller} requires an unambiguous ACGT sequence (got degenerate IUPAC codes). ` +
+        'Pre-process with canonicalVariant() or analyze via PrimerAnalyzer / MultiplexPool.',
+    );
+  }
+  return s;
+}
+
 /** Minimum sequence length accepted for thermodynamic analysis. */
 export const MIN_SEQUENCE_LENGTH = 4;
 /** Maximum sequence length accepted (protects O(n²)–O(n³) structure scans). */
@@ -16,7 +35,8 @@ export const MAX_SEQUENCE_LENGTH = 500;
 const VALID_PATTERN = /^[ACGT RYSWKMBDHVN]+$/i;
 
 /**
- * Normalises (trims, upper-cases) and validates a primer sequence.
+ * Normalises (trims, upper-cases, strips inner whitespace for pasted
+ * FASTA/multiline input) and validates a primer sequence.
  *
  * @throws {PrimerValidationError} on empty input, invalid characters
  * (including `U` — this is a DNA library, use `T`), or out-of-range length.

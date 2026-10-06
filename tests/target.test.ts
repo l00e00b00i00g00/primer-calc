@@ -108,4 +108,11 @@ describe('evaluateAgainstTarget', () => {
     expect(r.tmUnit).toBe('F');
     expect(r.tm as number).toBeGreaterThan(90);
   });
+
+  it('scores degenerate targets on their canonical variant', () => {
+    const r = evaluateAgainstTarget('ATGCGTAGCTAG', 'CTAGCTACGCAN');
+    expect(r.target).toBe('CTAGCTACGCAN');
+    expect(r.deltaG as number).toBeLessThan(-9);
+    expect(r.extendable).toBe(true);
+  });
 });

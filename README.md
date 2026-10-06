@@ -107,7 +107,11 @@ const tmMin = calculateTm('ATGCATGCATRY', {}, 'min'); // mean|min|consensus
   Extrémité 3′ (fenêtre de 5 nt) : avertissement si ΔG°37 < −5, critique si
   ≤ −6 (échelle calibrée sur l'amplitude physique d'un pentamère, max ≈ −6.7).
 - **IUPAC complet** : dégénérescence D = ∏nᵢ, Tm pondérée par abondance
-  (approximation d'O'Donnell–Maloney), structures évaluées sur le variant canonique.
+  (approximation d'O'Donnell–Maloney, modes `mean|min|consensus`),
+  structures évaluées sur le variant canonique. Les fonctions bas niveau
+  (`bestDimer`, `bestHairpin`, `tracebackBestAlignment`) exigent de
+  l'ACGT non ambigu (`AMBIGUOUS_SEQUENCE` sinon) ; les APIs haut niveau
+  canonicalisent pour vous.
 - **Biais 3′** : stabilité ΔG°37 du pentamère 3′-terminal + rapport de GC-clamp.
 
 ## ⚡ Architecture hybride (TypeScript + WASM + workers)
@@ -136,7 +140,7 @@ const tmMin = calculateTm('ATGCATGCATRY', {}, 'min'); // mean|min|consensus
 ## 🧪 Tests & CI
 
 ```bash
-npm test             # Vitest : 184 tests (standards-or, cas limites, conformité spec)
+npm test             # Vitest : 188 tests (standards-or, cas limites, conformité spec)
 npm run test:coverage  # build + couverture V8 : 100 % lignes/fonctions/branches
 npm run build        # tsup + worker navigateur : ESM + CJS + .d.ts + dist/worker.js
 npm run build:wasm   # Rust → wasm-pkg/ (cibles Node.js + navigateurs)

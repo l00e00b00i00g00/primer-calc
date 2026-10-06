@@ -20,6 +20,22 @@ const R_CAL: f64 = 1.987;
 const ZERO_C: f64 = 273.15;
 const T37: f64 = 310.15;
 
+/// Dinucleotide step: (top0, top1, bottom0, bottom1).
+type Quad = (u8, u8, u8, u8);
+/// Thermodynamic pair: (dH kcal/mol, dS cal/(mol·K)).
+type Thermo = (f64, f64);
+/// One table row: step key + thermodynamic pair.
+type NnEntry = (Quad, Thermo);
+/// Nearest-neighbor table with N entries.
+type NnTable<const N: usize> = [NnEntry; N];
+/// DP traceback: aligned segments and strand starts.
+struct DpHit {
+    top: Vec<u8>,
+    bot: Vec<u8>,
+    i0: usize,
+    j0: usize,
+}
+
 fn is_wc(a: u8, b: u8) -> bool {
     matches!(
         (a, b),
@@ -29,7 +45,7 @@ fn is_wc(a: u8, b: u8) -> bool {
 
 /// SantaLucia (1998) unified NN stack → (dH kcal/mol, dS cal/(mol·K)).
 fn nn_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
-    const TABLE: [((u8, u8, u8, u8), (f64, f64)); 10] = [
+    const TABLE: NnTable<10> = [
         ((b'A', b'A', b'T', b'T'), (-7.6, -21.3)),
         ((b'A', b'T', b'T', b'A'), (-7.2, -20.4)),
         ((b'T', b'A', b'A', b'T'), (-7.2, -21.3)),
@@ -57,7 +73,7 @@ fn nn_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
 /// (1997, 1998), Peyret et al. (1999), Watkins & SantaLucia (2005).
 /// Complete for isolated single mismatches (direct or 180° rotation).
 fn imm_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
-    const TABLE: [((u8, u8, u8, u8), (f64, f64)); 51] = [
+    const TABLE: NnTable<51> = [
         ((b'A', b'A', b'T', b'A'), (1.2, 1.7)),
         ((b'A', b'A', b'T', b'C'), (2.3, 4.6)),
         ((b'A', b'A', b'T', b'G'), (-0.6, -2.3)),
@@ -117,7 +133,7 @@ fn imm_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
 /// Each covers a terminal mismatch plus its adjacent WC pair, subsuming
 /// that end's terminal corrections. Complete for all such ends.
 fn tmm_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
-    const TABLE: [((u8, u8, u8, u8), (f64, f64)); 48] = [
+    const TABLE: NnTable<48> = [
         ((b'A', b'A', b'T', b'A'), (-3.1, -7.8)),
         ((b'A', b'A', b'T', b'C'), (-1.6, -4.0)),
         ((b'A', b'A', b'T', b'G'), (-1.9, -4.4)),
@@ -172,12 +188,12 @@ fn tmm_params(t0: u8, t1: u8, b0: u8, b1: u8) -> Option<(f64, f64)> {
 
 /// Shared direct + 180°-rotation lookup over an NN-style table.
 fn lookup_nn(
-    table: &[((u8, u8, u8, u8), (f64, f64))],
+    table: &[NnEntry],
     t0: u8,
     t1: u8,
     b0: u8,
     b1: u8,
-) -> Option<(f64, f64)> {
+) -> Option<Thermo> {
     for ((a, b, c, d), v) in table {
         if (*a, *b, *c, *d) == (t0, t1, b0, b1) {
             return Some(*v);
@@ -430,7 +446,7 @@ fn leading_run_cond(dep: &[u8], reached: bool) -> usize {
 /// Thermodynamic local alignment (Smith–Waterman over WC-pair states).
 /// Returns (top, bottom, a_start, b_start, deltaG); `-` marks bulges.
 /// Mirrors the TypeScript engine (`dp-align.ts`) transition by transition.
-fn dp_traceback(a: &[u8], brev: &[u8], eval_temp_c: f64) -> Option<(Vec<u8>, Vec<u8>, usize, usize, f64)> {
+fn dp_traceback(a: &[u8], brev: &[u8], eval_temp_c: f64) -> Option<DpHit> {
     const START: i8 = 0;
     const STACK: i8 = 1;
     const MISMATCH: i8 = 2;
@@ -540,7 +556,12 @@ fn dp_traceback(a: &[u8], brev: &[u8], eval_temp_c: f64) -> Option<(Vec<u8>, Vec
     }
     tops.reverse();
     bots.reverse();
-    Some((tops, bots, ci, cj, best))
+    Some(DpHit {
+        top: tops,
+        bot: bots,
+        i0: ci,
+        j0: cj,
+    })
 }
 
 fn scan(
@@ -565,21 +586,26 @@ fn scan(
             return;
         }
         let len = top.len();
+        // Strand positions consumed (gaps excluded) drive flank lookup,
+        // reach detection, and extension; string length overshoots on bulges.
+        let cons_top = top.iter().filter(|&&c| c != b'-').count();
+        let cons_bot = bot.iter().filter(|&&c| c != b'-').count();
         let fl = Flanks {
             top5: a_start.checked_sub(1).map(|i| a[i]),
             bottom3: b_start.checked_sub(1).map(|j| brev[j]),
-            top3: (a_start + len < a.len()).then(|| a[a_start + len]),
-            bottom5: (b_start + len < brev.len()).then(|| brev[b_start + len]),
+            top3: (a_start + cons_top < a.len()).then(|| a[a_start + cons_top]),
+            bottom5: (b_start + cons_bot < brev.len())
+                .then(|| brev[b_start + cons_bot]),
         };
         if let Some((dh, ds, paired)) = score_alignment(top, bot, self_comp, fl) {
             let dg = dh - t_k * ds / 1000.0;
-            let replace = best.as_ref().map_or(true, |b: &Best| dg < b.dg);
+            let replace = best.as_ref().is_none_or(|b: &Best| dg < b.dg);
             if replace {
                 let (td, ud) = depict(top, bot);
                 // A strand whose block misses its 3′ terminus (overhang)
                 // cannot be extended: run 0 by definition. Top is 5′→3′
                 // (3′ end right), bottom is 3′→5′ (3′ end left).
-                let run = trailing_run_cond(&td, a_start + len == a.len())
+                let run = trailing_run_cond(&td, a_start + cons_top == a.len())
                     .max(leading_run_cond(&ud, b_start == 0));
                 // Traced duplex composition for Owczarzy %GC/N (GC pairs/span).
                 let gc = top
@@ -603,9 +629,10 @@ fn scan(
         }
     };
 
-    // Scores a block plus its terminal-mismatch extensions (≤ 1 per end).
-    // Blocks are maximal, so in-range facing bases just outside are always
-    // mismatched and eligible for SantaLucia–Peyret TMM units.
+    // Scores a block plus its terminal extensions (≤ 1 base per end).
+    // For maximal blocks the facing in-range bases are always mismatched
+    // (TMM units); DP tracebacks may also extend WC runs — both score
+    // correctly through score_alignment.
     let extend = |top: &[u8],
                   bot: &[u8],
                   a_start: usize,
@@ -613,8 +640,11 @@ fn scan(
                   best: &mut Option<Best>| {
         consider(top, bot, a_start, b_start, best);
         let len = top.len();
+        let cons_top = top.iter().filter(|&&c| c != b'-').count();
+        let cons_bot = bot.iter().filter(|&&c| c != b'-').count();
         let can_left = a_start > 0 && b_start > 0;
-        let can_right = a_start + len < a.len() && b_start + len < brev.len();
+        let can_right =
+            a_start + cons_top < a.len() && b_start + cons_bot < brev.len();
         if can_left {
             let mut t = Vec::with_capacity(len + 1);
             t.push(a[a_start - 1]);
@@ -626,20 +656,20 @@ fn scan(
         }
         if can_right {
             let mut t = Vec::from(top);
-            t.push(a[a_start + len]);
+            t.push(a[a_start + cons_top]);
             let mut u = Vec::from(bot);
-            u.push(brev[b_start + len]);
+            u.push(brev[b_start + cons_bot]);
             consider(&t, &u, a_start, b_start, best);
         }
         if can_left && can_right {
             let mut t = Vec::with_capacity(len + 2);
             t.push(a[a_start - 1]);
             t.extend_from_slice(top);
-            t.push(a[a_start + len]);
+            t.push(a[a_start + cons_top]);
             let mut u = Vec::with_capacity(len + 2);
             u.push(brev[b_start - 1]);
             u.extend_from_slice(bot);
-            u.push(brev[b_start + len]);
+            u.push(brev[b_start + cons_bot]);
             consider(&t, &u, a_start - 1, b_start - 1, best);
         }
     };
@@ -697,8 +727,8 @@ fn scan(
             }
         }
     }
-    if let Some((top, bot, i0, j0, _dg)) = dp_traceback(a, brev, eval_temp_c) {
-        raw.push((top, bot, i0, j0));
+    if let Some(hit) = dp_traceback(a, brev, eval_temp_c) {
+        raw.push((hit.top, hit.bot, hit.i0, hit.j0));
     }
     for (top, bot, i0, j0) in &raw {
         extend(top, bot, *i0, *j0, &mut best);

@@ -25,6 +25,8 @@ import { bestDimerAlignment } from './structure/dimer.js';
  *
  * Runs on the TypeScript engine in every configuration — bit-exact parity
  * with the WASM backend is enforced by the shared test suite.
+ * Degenerate targets are scored on their canonical variant (same documented
+ * approximation as degenerate primers; positions still refer to the input).
  */
 export function evaluateAgainstTarget(
   primerSeq: string,
@@ -39,7 +41,8 @@ export function evaluateAgainstTarget(
     warnings.push({ code, severity, message });
 
   const canon = canonicalVariant(primer);
-  const found = bestDimerAlignment(canon, target, cond, false);
+  const targetCanon = canonicalVariant(target);
+  const found = bestDimerAlignment(canon, targetCanon, cond, false);
 
   // Perfect-match reference (duplex model at 37 °C + primer Tm).
   const perfect = duplexThermodynamics(canon, false);
@@ -80,7 +83,7 @@ export function evaluateAgainstTarget(
   // Bottom runs 3′ → 5′: target index (5′ → 3′) counts down from the end.
   const differences: DuplexDifference[] = [];
   let pi = aStart;
-  let ti = target.length - 1 - bStartRev;
+  let ti = targetCanon.length - 1 - bStartRev;
   let lastPi = -1;
   let lastPiPaired = false;
   for (let k = 0; k < top.length; k++) {
@@ -143,10 +146,10 @@ export function evaluateAgainstTarget(
   }
   const flanks: DuplexFlanks = {};
   if (aStart > 0) flanks.top5 = canon[aStart - 1] as string;
-  if (bStartRev > 0) flanks.bottom3 = target[target.length - bStartRev] as string;
+  if (bStartRev > 0) flanks.bottom3 = targetCanon[targetCanon.length - bStartRev] as string;
   if (aStart + consTop < canon.length) flanks.top3 = canon[aStart + consTop] as string;
-  if (bStartRev + consBottom < target.length) {
-    flanks.bottom5 = target[target.length - 1 - (bStartRev + consBottom)] as string;
+  if (bStartRev + consBottom < targetCanon.length) {
+    flanks.bottom5 = targetCanon[targetCanon.length - 1 - (bStartRev + consBottom)] as string;
   }
   const traced = alignmentThermodynamics(top, bottom, false, flanks);
   const deltaG37 = gibbsFreeEnergy(traced.dH, traced.dS, 37);

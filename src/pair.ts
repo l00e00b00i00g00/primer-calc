@@ -27,13 +27,16 @@ export function analyzePrimerPair(
     warnings.push({ code, severity, message });
 
   // Tm values share the configured unit, so the gap is directly comparable.
+  // The tolerance is defined in °C and converted for Fahrenheit output.
+  const unit = forward.tmUnit;
+  const tolerance = unit === 'F' ? PAIR_TM_TOLERANCE * 1.8 : PAIR_TM_TOLERANCE;
   const tmDifference = Math.abs(forward.tm - reverse.tm);
-  const tmMatched = tmDifference <= PAIR_TM_TOLERANCE;
+  const tmMatched = tmDifference <= tolerance;
   if (!tmMatched) {
     push(
       'PAIR_TM_MISMATCH',
       'warning',
-      `Forward/reverse Tm gap ${tmDifference.toFixed(1)} °${forward.tmUnit} exceeds ${PAIR_TM_TOLERANCE} °C.`,
+      `Forward/reverse Tm gap ${tmDifference.toFixed(1)} °${unit} exceeds ${tolerance.toFixed(1)} °${unit}.`,
     );
   }
 

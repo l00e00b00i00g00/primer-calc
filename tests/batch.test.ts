@@ -27,4 +27,12 @@ describe('analyzeBatch', () => {
   it('handles an empty batch', () => {
     expect(analyzeBatch([])).toEqual([]);
   });
+
+  it('validates labelled entries', () => {
+    expect(() => analyzeBatch([{ id: 42 as never, seq: 'ATGCATGC' }])).toThrow(
+      /non-empty string id/,
+    );
+    expect(() => analyzeBatch([{ id: '', seq: 'ATGCATGC' }])).toThrow(/non-empty string id/);
+    expect(() => analyzeBatch([{ id: 'x', seq: 'ATGCX' } as never])).toThrow();
+  });
 });

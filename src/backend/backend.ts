@@ -17,6 +17,10 @@ import { meltingTemperature } from '../thermo/tm.js';
  */
 export interface ComputeBackend {
   readonly name: 'typescript' | 'wasm';
+  /**
+   * All methods accept normalized (possibly degenerate IUPAC) sequences
+   * and canonicalize internally; callers never need to pre-process.
+   */
   hairpin(seq: string, cond: ResolvedConditions): HairpinResult;
   homodimer(seq: string, cond: ResolvedConditions): DimerResult;
   heterodimer(a: string, b: string, cond: ResolvedConditions): DimerResult;

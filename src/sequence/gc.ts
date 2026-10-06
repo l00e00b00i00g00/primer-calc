@@ -21,7 +21,7 @@ export function atContent(seq: string): number {
   return 100 - gcContent(seq);
 }
 
-/** Counts of each concrete base (ambiguous codes split evenly). */
+/** Counts of unambiguous bases (ambiguous IUPAC codes are ignored). */
 export function baseCounts(seq: string): Record<'A' | 'C' | 'G' | 'T', number> {
   const counts = { A: 0, C: 0, G: 0, T: 0 };
   for (const c of seq.toUpperCase()) {

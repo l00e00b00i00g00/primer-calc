@@ -3,6 +3,7 @@ import type { DuplexFlanks } from '../thermo/nearest-neighbor.js';
 import { hairpinLoopParams } from '../constants.js';
 import { alignmentThermodynamics } from '../thermo/nearest-neighbor.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
+import { assertUnambiguous } from '../sequence/validate.js';
 
 /** Minimum paired stem length considered. */
 export const MIN_STEM = 3;
@@ -20,7 +21,7 @@ export const MIN_LOOP = 3;
  * ≈ +0.06 kcal/mol per end at 37 °C).
  */
 export function bestHairpin(seq: string, evalTempC: number): HairpinResult {
-  const s = seq.toUpperCase();
+  const s = assertUnambiguous(seq, 'bestHairpin');
   const n = s.length;
   const none: HairpinResult = {
     found: false,

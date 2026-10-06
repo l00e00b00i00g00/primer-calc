@@ -1,5 +1,11 @@
 import { bestDimer } from '../structure/dimer.js';
-import type { DimerResult, PoolPrimer, ResolvedConditions } from '../types.js';
+import { canonicalVariant } from '../sequence/degenerate.js';
+import type {
+  CrossDimerizationResult,
+  DimerResult,
+  PoolPrimer,
+  ResolvedConditions,
+} from '../types.js';
 import { assembleCrossDimerization } from './pool.js';
 
 /** One pair scored inside a worker: indices, sequences, self-pair flag. */
@@ -37,9 +43,14 @@ export const DEFAULT_WEB_WORKERS = 4;
 /**
  * Pure pair-scoring kernel shared by the browser worker bundle
  * (`src/multiplex/worker-entry.ts` → `dist/worker.js`) and hosts.
+ * Degenerate primers are scored on their canonical variant.
  */
 export function handleWorkerMessage(data: WorkerRequest): WorkerResponse {
-  return data.pairs.map(([i, j, a, b, self]) => [i, j, bestDimer(a, b, data.cond, self)]);
+  return data.pairs.map(([i, j, a, b, self]) => [
+    i,
+    j,
+    bestDimer(canonicalVariant(a), canonicalVariant(b), data.cond, self),
+  ]);
 }
 
 /**
@@ -58,7 +69,7 @@ export async function crossDimerizationWebWorkers(
   workerUrl: string | URL,
   opts: WebWorkerOptions = {},
   spawn: (url: string | URL) => WebWorkerLike,
-): Promise<import('../types.js').CrossDimerizationResult> {
+): Promise<CrossDimerizationResult> {
   const n = primers.length;
   const pairs: WorkerPair[] = [];
   for (let i = 0; i < n; i++) {

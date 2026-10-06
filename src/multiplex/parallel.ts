@@ -81,7 +81,7 @@ export async function crossDimerizationParallel(
     const { parentPort, workerData } = require('node:worker_threads');
     const lib = require(workerData.lib);
     const out = workerData.chunk.map(([i, j, a, b, self]) =>
-      [i, j, lib.bestDimer(a, b, workerData.cond, self)],
+      [i, j, lib.bestDimer(lib.canonicalVariant(a), lib.canonicalVariant(b), workerData.cond, self)],
     );
     parentPort.postMessage(out);
   `;

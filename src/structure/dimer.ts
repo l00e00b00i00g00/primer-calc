@@ -5,6 +5,7 @@ import { alignmentThermodynamics } from '../thermo/nearest-neighbor.js';
 import { dimerMeltingTemp } from '../thermo/tm.js';
 import { tracebackBestAlignment } from './dp-align.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
+import { assertUnambiguous } from '../sequence/validate.js';
 /** Minimum 3′-terminal paired run (nt) considered polymerase-extendable. */
 export const ANCHORED_RUN_MIN = 2;
 
@@ -76,8 +77,8 @@ function dimerCore(
   result: DimerResult;
   aln: { top: string; bottom: string; aStart: number; bStartRev: number } | null;
 } {
-  const A = a.toUpperCase();
-  const brev = [...b.toUpperCase()].reverse().join(''); // b in 3' → 5'
+  const A = assertUnambiguous(a, 'bestDimer');
+  const brev = [...assertUnambiguous(b, 'bestDimer')].reverse().join(''); // b in 3' → 5'
   const none: DimerResult = {
     found: false,
     deltaG: null,
@@ -97,18 +98,23 @@ function dimerCore(
 
   let best: DimerResult = none;
   let bestAln: { top: string; bottom: string; aStart: number; bStartRev: number } | null = null;
-  const scoreOne = (top: string, bottom: string, aStart: number, bStartRev: number) => {
-    const paired = countPaired(top, bottom);
-    if (paired < 2) return;
-    const len = top.length;
-    // Strand positions consumed (gaps excluded) drive flank lookup and
-    // 3′-reach detection; string length would overshoot on bulges.
+  /** Strand positions consumed by an alignment (gaps excluded). */
+  const consumed = (top: string, bottom: string): [number, number] => {
     let consTop = 0;
     let consBottom = 0;
     for (let p = 0; p < top.length; p++) {
       if ((top[p] as string) !== '-') consTop++;
       if ((bottom[p] as string) !== '-') consBottom++;
     }
+    return [consTop, consBottom];
+  };
+  const scoreOne = (top: string, bottom: string, aStart: number, bStartRev: number) => {
+    const paired = countPaired(top, bottom);
+    if (paired < 2) return;
+    const len = top.length;
+    // Strand positions consumed (gaps excluded) drive flank lookup and
+    // 3′-reach detection; string length would overshoot on bulges.
+    const [consTop, consBottom] = consumed(top, bottom);
     const flanks: DuplexFlanks = {};
     if (aStart > 0) flanks.top5 = A[aStart - 1] as string;
     if (bStartRev > 0) flanks.bottom3 = brev[bStartRev - 1] as string;
@@ -153,15 +159,16 @@ function dimerCore(
   };
 
   /**
-   * Scores a block plus its terminal-mismatch extensions (≤ 1 per end).
-   * Blocks are maximal, so in-range facing bases just outside are always
-   * mismatched and eligible for SantaLucia–Peyret TMM units.
+   * Scores a block plus its terminal extensions (≤ 1 base per end).
+   * For maximal blocks the facing in-range bases are always mismatched
+   * (TMM units); DP tracebacks may also extend WC runs — both score
+   * correctly through alignmentThermodynamics.
    */
   const consider = (top: string, bottom: string, aStart: number, bStartRev: number) => {
     scoreOne(top, bottom, aStart, bStartRev);
-    const len = top.length;
+    const [consTop, consBottom] = consumed(top, bottom);
     const canLeft = aStart > 0 && bStartRev > 0;
-    const canRight = aStart + len < A.length && bStartRev + len < brev.length;
+    const canRight = aStart + consTop < A.length && bStartRev + consBottom < brev.length;
     if (canLeft) {
       scoreOne(
         (A[aStart - 1] as string) + top,
@@ -172,16 +179,16 @@ function dimerCore(
     }
     if (canRight) {
       scoreOne(
-        top + (A[aStart + len] as string),
-        bottom + (brev[bStartRev + len] as string),
+        top + (A[aStart + consTop] as string),
+        bottom + (brev[bStartRev + consBottom] as string),
         aStart,
         bStartRev,
       );
     }
     if (canLeft && canRight) {
       scoreOne(
-        (A[aStart - 1] as string) + top + (A[aStart + len] as string),
-        (brev[bStartRev - 1] as string) + bottom + (brev[bStartRev + len] as string),
+        (A[aStart - 1] as string) + top + (A[aStart + consTop] as string),
+        (brev[bStartRev - 1] as string) + bottom + (brev[bStartRev + consBottom] as string),
         aStart - 1,
         bStartRev - 1,
       );

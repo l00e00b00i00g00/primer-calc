@@ -214,6 +214,17 @@ describe('MultiplexPool (spec §4)', () => {
     expect(r.hasRisks).toBe(false);
   });
 
+  it('evaluates degenerate pools identically on every engine', async () => {
+    const primers = [
+      { id: 'd1', seq: 'ATGCRYATGCATGC' },
+      { id: 'd2', seq: 'GCNSWKGCTAGCTA' },
+    ];
+    const pool = new MultiplexPool(primers);
+    const sync = pool.evaluateCrossDimerization();
+    const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 2 });
+    expect(parallel).toEqual(sync);
+  });
+
   it('does not escalate non-anchored dimers via the 3′ rule', () => {
     // Central-block homodimer: stable (≤ −6) but not 3′-anchored.
     const pool = new MultiplexPool([{ id: 'central', seq: 'CCATATATATATATCC' }]);

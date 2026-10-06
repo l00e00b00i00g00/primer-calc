@@ -41,6 +41,14 @@ describe('analyzePrimerPair', () => {
     );
   });
 
+  it('scales the Tm tolerance to Fahrenheit output', () => {
+    const r = analyzePrimerPair('ATGCGTAGCTAGCTAGCTA', 'GCTAGCTAGCTAGCTA', { temp_unit: 'F' });
+    expect(r.tmMatched).toBe(false);
+    expect(r.warnings.some((w) => w.code === 'PAIR_TM_MISMATCH')).toBe(true);
+    // 7.46 °C gap ≈ 13.4 °F, tolerance 9 °F.
+    expect(r.tmDifference).toBeCloseTo(7.46 * 1.8, 0);
+  });
+
   it('validates both sequences', () => {
     expect(() => analyzePrimerPair('ATGCX', 'ATGCATGC')).toThrow(PrimerValidationError);
     expect(() => analyzePrimerPair('ATGCATGC', 'AUGC')).toThrow(PrimerValidationError);

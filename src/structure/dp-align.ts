@@ -2,6 +2,7 @@ import { INITIATION, immParams, nnParams } from '../constants.js';
 import { BULGE_DG37 } from '../thermo/nearest-neighbor.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
 import { ZERO_C_KELVIN } from '../constants.js';
+import { assertUnambiguous } from '../sequence/validate.js';
 
 /** One DP-traced local alignment between two antiparallel strands. */
 export interface DpAlignment {
@@ -13,7 +14,8 @@ export interface DpAlignment {
   aStart: number;
   /** Bottom-strand start index (strand coordinates, gaps excluded). */
   bStartRev: number;
-  /** Alignment ΔG at the evaluation temperature (kcal/mol). */
+  /** Core-motif ΔG at the evaluation temperature (stacks/IMM/bulges/init only;
+   terminal corrections and dangling ends are finalized by the caller). */
   deltaG: number;
 }
 
@@ -40,8 +42,8 @@ export function tracebackBestAlignment(
   b: string,
   evalTempC: number,
 ): DpAlignment | null {
-  const A = a.toUpperCase();
-  const B = b.toUpperCase();
+  const A = assertUnambiguous(a, 'tracebackBestAlignment');
+  const B = assertUnambiguous(b, 'tracebackBestAlignment');
   const n = A.length;
   const m = B.length;
   if (n === 0 || m === 0) return null;

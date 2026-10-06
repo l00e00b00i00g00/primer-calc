@@ -8,6 +8,7 @@ import {
   tmmParams,
 } from '../constants.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
+import { PrimerValidationError } from '../sequence/validate.js';
 
 /** Cumulative duplex thermodynamics. */
 export interface DuplexThermo {
@@ -43,7 +44,10 @@ export function duplexThermodynamics(seq: string, selfComplementary = false): Du
     const ca = comp[a];
     const cb = comp[b];
     if (ca === undefined || cb === undefined) {
-      throw new Error(`duplexThermodynamics requires an unambiguous sequence (got "${a}${b}").`);
+      throw new PrimerValidationError(
+        'AMBIGUOUS_SEQUENCE',
+        `duplexThermodynamics requires an unambiguous sequence (got "${a}${b}").`,
+      );
     }
     // Bottom 3'→5' = comp(a) followed by comp(b).
     // Total lookup: ca/cb are the Watson–Crick complements of a/b, so every

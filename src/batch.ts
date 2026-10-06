@@ -26,6 +26,9 @@ export function analyzeBatch(
     if (typeof p === 'string') {
       return analyzer.evaluate(p);
     }
+    if (!p || typeof p.id !== 'string' || p.id.length === 0) {
+      throw new Error('Every labelled batch primer needs a non-empty string id.');
+    }
     return { ...analyzer.evaluate(p.seq), id: p.id };
   });
 }
