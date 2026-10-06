@@ -96,36 +96,65 @@ const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 4 }
   paresseux : le cœur d'analyse reste bundlable pour navigateur.
 - **Cœur Rust compilé en WASM** (`wasm/` → `wasm-pkg/`, `WasmBackend`) : moteur
   dimères en parité stricte avec le TS (tests de parité bit-à-bit :
-  `tests/wasm.test.ts`). Chargement via `loadWasmBackend()` (URL explicite,
-  package `@synthflow/primer-calc-wasm`, puis build local) avec repli
-  automatique vers le moteur TS. Régénération : `npm run build:wasm`
-  (toolchain Rust + target `wasm32-unknown-unknown` + CLI `wasm-bindgen`).
-- **Multi-threading** : `MultiplexPool.evaluateCrossDimerizationParallel()`
-  distribue les paires sur `node:worker_threads` (Node uniquement ; même
-  assemblage de résultats, `tests/parallel.test.ts`).
+  `tests/wasm.test.ts`, `tests/wasm-web.test.ts`).
+  - Node.js : `loadWasmBackend()` (URL explicite, package
+    `@synthflow/primer-calc-wasm`, puis build local `wasm-pkg/`) avec repli
+    automatique vers le moteur TS.
+  - Navigateurs : build `wasm-pkg/web/` (`--target web`, fecth-based) +
+    `loadWasmBackendWeb(urlGlue)` ; en bundler (Vite/webpack), importez la
+    glue et construisez `new WasmBackend(mod)` après son initialisation.
+  - Régénération : `npm run build:wasm` (toolchain Rust +
+    target `wasm32-unknown-unknown` + CLI `wasm-bindgen`).
+- **Multi-threading** :
+  - Node : `MultiplexPool.evaluateCrossDimerizationParallel()` sur
+    `node:worker_threads` (`tests/parallel.test.ts`).
+  - Navigateurs : `crossDimerizationWebWorkers(primers, cond, workerUrl, opts, spawn)`
+    avec `new Worker(url)` sur `dist/worker.js` (bundle IIFE auto-suffisant,
+    `npm run build:worker`), même assemblage de résultats (`tests/webworkers.test.ts`).
 
-## 🧪 Tests
+## 🧪 Tests & CI
 
 ```bash
-npm test             # Vitest : 127 tests (standards-or, cas limites, conformité spec)
+npm test             # Vitest : 138 tests (standards-or, cas limites, conformité spec)
 npm run test:coverage  # build + couverture V8 : 100 % lignes/fonctions/branches
-npm run build        # tsup : ESM + CJS + .d.ts dans dist/
-npm run build:wasm   # Rust → wasm-pkg/
+npm run build        # tsup + worker navigateur : ESM + CJS + .d.ts + dist/worker.js
+npm run build:wasm   # Rust → wasm-pkg/ (cibles Node.js + navigateurs)
 ```
 
 Jeux de validation :
 - exemple duplex SantaLucia 1998 (`CGTTGA` : ΔH −40.9, ΔS −114.6) et
   ΔG°37 SantaLucia & Hicks 2004 ;
 - table dangling ends Bommarito et al. 2000 ;
-- **benchmark croisé Primer3** (`tests/primer3.test.ts`, valeurs gelées
-  primer3-py 2.3.1) : structure différentielle NN identique (≤ 0.05 °C),
+- **Benchmark croisé Primer3** (`tests/primer3.test.ts` + `tests/primer3-goldens.json`,
+  gelés via primer3-py 2.3.1) : structure différentielle NN identique (≤ 0.05 °C),
   Tm absolus ≤ 2.5 °C (résidu documenté des révisions de tables 1998→2004
   sur les stacks mixtes), homodimères ΔG ≤ 1.5 kcal/mol, ordre de Tm
-  identique en conditions PCR ;
-- parité bit-à-bit TS ≡ WASM (`tests/wasm.test.ts`), workers (`tests/parallel.test.ts`) ;
+  identique en conditions PCR. Régénération :
+  `python3 scripts/primer3-regen.py` (vérification : `--check`, job CI hebdomadaire) ;
+  le package npm ne dépend jamais de Python.
+- parité bit-à-bit TS ≡ WASM Node ≡ WASM web (`tests/wasm*.test.ts`),
+  workers Node et navigateurs (`tests/parallel*.test.ts`, `tests/webworkers.test.ts`) ;
 - GC 0 %/100 %, séquences très courtes/longues, IUPAC complexes,
   dégénérescence astronomique (`N×100`), conditions invalides.
+
+L'intégration continue (`.github/workflows/ci.yml`, Node 18/20/22 × Ubuntu/macOS)
+reproduit typecheck, build TS, build WASM + **vérifie que `wasm-pkg/`
+committé correspond aux sources Rust**, tests + couverture, et re-valide
+les goldens Primer3 chaque semaine.
 
 ## 📄 Licence
 
 Apache 2.0 — voir `LICENSE`.
+
+## 📦 Publication
+
+```bash
+npm login
+# Premier publish du scope : accès public requis.
+npm publish --access public            # @synthflow/primer-calc
+npm publish ./wasm-pkg --access public # @synthflow/primer-calc-wasm (optionnel)
+# Avec GitHub Actions OIDC : ajouter --provenance aux deux commandes.
+```
+
+Vérifié sans credentials : `npm publish --dry-run` (18 fichiers, 126.8 kB,
+`wasm/target/` exclu, `dist/` + `wasm-pkg/` inclus).
