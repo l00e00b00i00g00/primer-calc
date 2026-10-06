@@ -9,6 +9,8 @@ export { MultiplexPool } from './MultiplexPool.js';
 export { analyzePrimer, calculateTm } from './analyze.js';
 export { evaluateAgainstTarget } from './target.js';
 export { analyzePrimerPair, PAIR_TM_TOLERANCE } from './pair.js';
+export { analyzeBatch } from './batch.js';
+export type { BatchInput, BatchResult } from './batch.js';
 
 export { PrimerValidationError } from './sequence/validate.js';
 export {

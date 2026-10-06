@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MultiplexPool } from '../src/MultiplexPool.js';
 import { PrimerAnalyzer } from '../src/PrimerAnalyzer.js';
 import { analyzePrimer, calculateTm } from '../src/analyze.js';
+import { analyzePrimerPair } from '../src/pair.js';
 import { PrimerValidationError } from '../src/sequence/validate.js';
 
 const SPEC_CONDITIONS = {
@@ -204,6 +205,13 @@ describe('MultiplexPool (spec §4)', () => {
     const crossCheck = pool.evaluateCrossDimerization(SPEC_CONDITIONS);
     expect(crossCheck.hasCrossDimers).toBe(true);
     expect(crossCheck.conflicts.every((c) => c.severity === 'warning')).toBe(true);
+  });
+
+  it('reports a fully clean pair without any risk', () => {
+    const r = analyzePrimerPair('GCTCCGTGAGTCTAGGATCT', 'GCCACCAAGCTGTTGACAAA');
+    expect(r.tmMatched).toBe(true);
+    expect(r.warnings).toEqual([]);
+    expect(r.hasRisks).toBe(false);
   });
 
   it('does not escalate non-anchored dimers via the 3′ rule', () => {

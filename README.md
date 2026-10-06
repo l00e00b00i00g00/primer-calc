@@ -67,6 +67,15 @@ if (crossCheck.hasCrossDimers) {
 
 // Grand pool : distribution sur worker threads (résultats identiques)
 const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 4 });
+
+// Navigateurs : même analyse sur Web Workers via dist/worker.js
+// crossDimerizationWebWorkers(primers, cond, workerUrl, opts, (u) => new Worker(u));
+
+// Paire d'amorces, cible, batch, dégénérescence
+const pair = analyzePrimerPair('ATGCGTAGCTAGCTAGCTA', 'GCTAGCTAGCTAGCTA');
+const target = analyzer.evaluateAgainstTarget('ATGCGTAGCTAG', 'CTAGCTACGCAT');
+const batch = analyzeBatch(['ATGCGTAGCTAGCTAGCTA', { id: 'gc8', seq: 'GCGCGCGC' }]);
+const tmMin = calculateTm('ATGCATGCATRY', {}, 'min'); // mean|min|consensus
 ```
 
 ## 🧮 Modèle scientifique
@@ -82,10 +91,17 @@ const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 4 }
   pour le duplex amorce–matrice ; dimères : `R·ln(Ct)` + symétrie (homodimères),
   `R·ln(Ct/2)` (hétérodimères).
 - **Sels** : équivalent sodium de **von Ahsen 2001**,
-  `[Na⁺]eq = [mono] + 120·√([Mg²⁺] − [dNTP])` (mM), avec clamp Mg²⁺ ≥ 0.
+  `[Na⁺]eq = [mono] + 120·√([Mg²⁺] − [dNTP])` (mM), avec clamp Mg²⁺ ≥ 0 —
+  ou correction mixte mono/divalent **Owczarzy 2004/2008** (`salt_method:
+'owczarzy'`, équilibre Ka Mg:dNTP, arbre de décision en R), plus proche
+  de Primer3 sur toutes les sondes de référence.
+- **Mismatches** : internes isolés (Allawi/SantaLucia/Peyret/Watkins, IMM) et
+  terminaux (SantaLucia & Peyret 2001, TMM) ; tandems et bulges rompent
+  l'empilement (bulge +3.0 kcal/mol).
 - **Structures** : hairpins (tiges parfaites + pénalités de boucle de Turner,
   extrapolation Jacobson–Stockmayer au-delà de 9 nt), homo/hétéro-dimères
-  (balayage thermodynamique complet, pontage d'un mismatch interne unique).
+  (blocs + pontages + alignement DP thermodynamique Smith–Waterman,
+  minimum global).
 - **Seuils** : ΔG < −9 kcal/mol → alerte **critique** (hairpins, dimères) ;
   ΔG ≤ −6 → avertissement ; dimère critique aussi si ancré en 3′ avec ΔG < −7.
   Extrémité 3′ (fenêtre de 5 nt) : avertissement si ΔG°37 < −5, critique si
@@ -120,7 +136,7 @@ const parallel = await pool.evaluateCrossDimerizationParallel({}, { workers: 4 }
 ## 🧪 Tests & CI
 
 ```bash
-npm test             # Vitest : 138 tests (standards-or, cas limites, conformité spec)
+npm test             # Vitest : 184 tests (standards-or, cas limites, conformité spec)
 npm run test:coverage  # build + couverture V8 : 100 % lignes/fonctions/branches
 npm run build        # tsup + worker navigateur : ESM + CJS + .d.ts + dist/worker.js
 npm run build:wasm   # Rust → wasm-pkg/ (cibles Node.js + navigateurs)

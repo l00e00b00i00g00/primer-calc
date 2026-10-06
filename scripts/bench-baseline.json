@@ -1,0 +1,9 @@
+{
+  "evaluate 19-mer": 218952,
+  "calculateTm 19-mer": 3550,
+  "homodimer 20-mer": 118271,
+  "heterodimer 16-mer": 96493,
+  "hairpin 20-mer": 79458,
+  "DP 200-mer": 7962658,
+  "degenerate N×8": 4817861
+}

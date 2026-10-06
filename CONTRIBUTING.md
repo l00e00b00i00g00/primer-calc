@@ -7,7 +7,7 @@ Requirements: Node.js ≥ 18. Rust toolchain optional (WASM core only).
 ```bash
 npm ci
 npm run build        # TypeScript → dist/ (+ dist/worker.js)
-npm test             # 138 Vitest tests
+npm test             # 184 Vitest tests
 npm run test:coverage  # build + 100% coverage gate (lines/functions/branches)
 ```
 
@@ -25,7 +25,8 @@ npm run test:coverage  # build + 100% coverage gate (lines/functions/branches)
 | `npm run example`       | `examples/quickstart.ts` via `tsx`            |
 
 Every PR must keep `lint`, `format:check`, `typecheck`, tests and the
-coverage gate green.
+coverage gate green. PRs changing the package should include a changeset
+(`npx changeset add`); CI reports changeset status advisory-only.
 
 ## Conventions
 
@@ -44,7 +45,8 @@ coverage gate green.
 
 ## Releases
 
-1. Update `CHANGELOG.md` (Keep a Changelog) and bump `package.json`.
+1. `npx changeset version` consumes pending changesets (bumps versions,
+   prepends `CHANGELOG.md` entries); review and finalize `CHANGELOG.md`.
 2. `git tag vX.Y.Z && git push origin vX.Y.Z`.
 3. `gh release create vX.Y.Z --notes-file <notes>`.
 4. Publish via the `publish` CI workflow (trusted publishing + provenance);

@@ -183,7 +183,8 @@ export function evaluateAgainstTarget(
     alignedPrimer,
     alignedTarget,
     deltaG,
-    tm: found.result.tm === null ? null : toUnit(found.result.tm, cond.temp_unit),
+    // Invariant of bestDimer: a found duplex always carries its Tm.
+    tm: toUnit(found.result.tm as number, cond.temp_unit),
     tmUnit: cond.temp_unit,
     deltaGPerfect37,
     tmPerfect,

@@ -34,6 +34,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DimerAlignment`, `DpAlignment` types); `PrimerAnalyzer` gains
   `evaluateAgainstTarget`. Validated against Primer3 hetero goldens
   (perfect, internal/terminal/double mismatches).
+- Primer pair analysis (`analyzePrimerPair`): shared-condition F/R reports,
+  Tm matching (≤ 5 °C), cross-dimer grading.
+- Degeneracy weighting modes (`mean`/`min`/`consensus`) across
+  `analyzeDegeneracy`, `PrimerAnalyzer`, `analyzePrimer` and `calculateTm`.
+- Batch analysis (`analyzeBatch`) sharing one analyzer/backend.
+- Shipped-size budgets (`scripts/check-size.mjs`) and micro-benchmarks
+  (`scripts/bench.mjs` + baselines, `--check` smoke in CI).
+- Changesets for pending-change tracking (`npx changeset add`).
+- Primer pair analysis (`analyzePrimerPair`): shared-condition F/R reports,
+  Tm matching (≤ 5 °C), cross-dimer grading.
+- Degeneracy weighting modes (`mean`/`min`/`consensus`) across
+  `analyzeDegeneracy`, `PrimerAnalyzer`, `analyzePrimer` and `calculateTm`.
+- Batch analysis (`analyzeBatch`) sharing one analyzer/backend.
+- Shipped-size budgets (`scripts/check-size.mjs`) and micro-benchmarks
+  (`scripts/bench.mjs` + baselines, `--check` smoke in CI).
 
 ## [0.1.0] - 2026-10-06
 

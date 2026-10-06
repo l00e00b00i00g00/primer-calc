@@ -66,6 +66,37 @@ describe('evaluateAgainstTarget', () => {
     expect(r.hasRisks).toBe(true);
   });
 
+  it('inventories bulges with null-side indices', () => {
+    const r = evaluateAgainstTarget('GCGCAGCGC', 'CGCGCGCG');
+    expect(r.deltaG as number).toBeCloseTo(-6.3, 1);
+    expect(r.differences).toHaveLength(1);
+    expect(r.differences[0]).toMatchObject({ kind: 'bulge' });
+    const d = r.differences[0] as { primerIndex: number | null; targetIndex: number | null };
+    expect((d.primerIndex ?? -1) >= 0 || (d.targetIndex ?? -1) >= 0).toBe(true);
+  });
+
+  it('inventories target-side bulges (primer gap)', () => {
+    const r = evaluateAgainstTarget('ATGCGTAGCTAG', 'CTAGCGTACGCAT');
+    expect(r.alignedPrimer).toBe('ATGCGTA-GCTAG');
+    expect(r.differences).toHaveLength(1);
+    expect(r.differences[0]).toMatchObject({
+      kind: 'bulge',
+      primerIndex: null,
+      targetBase: 'G',
+    });
+  });
+
+  it('flags highly divergent footprints', () => {
+    const p = 'ATGCGTAGCTAGCTAGCTAGCTAG';
+    const t0 = 'CTAGCTAGCTAGCTAGCTAGCAT'.split('');
+    for (const i of [2, 6, 11, 15, 20]) {
+      t0[t0.length - 1 - i] = t0[t0.length - 1 - i] === 'A' ? 'C' : 'A';
+    }
+    const r = evaluateAgainstTarget(p, t0.join(''));
+    expect(r.differences.length).toBeGreaterThan(3);
+    expect(r.warnings.some((w) => w.code === 'TARGET_HIGH_DIVERGENCE')).toBe(true);
+  });
+
   it('validates both sequences', () => {
     expect(() => evaluateAgainstTarget('ATGCX', 'ATGCATGC')).toThrow(PrimerValidationError);
     expect(() => evaluateAgainstTarget('ATGCATGC', '')).toThrow(PrimerValidationError);

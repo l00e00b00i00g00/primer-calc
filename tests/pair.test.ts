@@ -31,6 +31,16 @@ describe('analyzePrimerPair', () => {
     expect(r.warnings).toEqual([]);
   });
 
+  it('grades a weak cross-dimer at warning level', () => {
+    // 5-bp GC heterodimer: ΔG°37 ≈ −6.8, anchored but above −7.
+    const r = analyzePrimerPair('GCGCG', 'CGCGC');
+    expect(r.crossDimer.deltaG as number).toBeGreaterThan(-9);
+    expect(r.crossDimer.deltaG as number).toBeLessThanOrEqual(-6);
+    expect(r.warnings.some((w) => w.code === 'PAIR_CROSS_DIMER' && w.severity === 'warning')).toBe(
+      true,
+    );
+  });
+
   it('validates both sequences', () => {
     expect(() => analyzePrimerPair('ATGCX', 'ATGCATGC')).toThrow(PrimerValidationError);
     expect(() => analyzePrimerPair('ATGCATGC', 'AUGC')).toThrow(PrimerValidationError);

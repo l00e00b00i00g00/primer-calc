@@ -72,12 +72,32 @@ jobs:
           npm pack --pack-destination /tmp --silent &&
           npx -y -p @arethetypeswrong/cli attw
           --pack /tmp/sfstudio_tools-primer-calc-*.tgz
+      - name: Size budgets
+        run: node scripts/check-size.mjs
+      - name: Bench smoke (5x baselines)
+        run: node scripts/bench.mjs --check
+
+  changesets:
+    # Advisory: PRs changing the package should carry a changeset.
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+      - run: npm ci
+      - name: Changeset status (advisory)
+        run: npx changeset status
 
   primer3:
     # Continuous cross-validation against Primer3 thermodynamics.
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    steps:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'    steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
