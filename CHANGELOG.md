@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Terminal UI (`primer-calc` bin, Ink): Analyze/Multiplex/Help tabs on the
+  full engine, quick `primer-calc [seq] [--json]` analysis mode, `--lang`
+  override. New exports: `App` screens excluded from the library surface;
+  `dist/cli.js` shipped, `bin/primer-calc.js` entry point.
+- Internationalization: system locale detection (`LC_ALL`→`LC_MESSAGES`→
+  `LANG`, `Intl` fallback for Windows), 8 typed dictionaries
+  (en/fr/es/zh/ar/ru/pt/de, missing keys fail compilation), `Ctrl+L`
+  cycling, localized warning templates. New exports: `detectLocale`,
+  `resolveLocale`, `translate`, `translateWarning`, `translateSeverity`,
+  `LOCALES`, `LOCALE_CODES` (+ `Locale`, `Messages` types).
+- Documentation in 8 languages (`README.md` English primary + `.fr/.es/.zh/
+.ar/.ru/.pt/.de.md`) with a language switcher.
+
 ## 0.2.2 - 2026-10-06
 
 ### Fixed

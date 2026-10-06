@@ -11,6 +11,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "primer-calc": "./bin/primer-calc.js"
+  },
   "exports": {
     ".": {
       "import": {
@@ -24,6 +27,7 @@
     }
   },
   "files": [
+    "bin",
     "dist",
     "wasm/Cargo.toml",
     "wasm/Cargo.lock",
@@ -65,14 +69,21 @@
     "@changesets/cli": "^3.0.3",
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.7.4",
+    "@types/react": "^18.3.31",
     "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
+    "ink-testing-library": "^4.0.0",
     "prettier": "^3.9.9",
     "tsup": "^8.3.0",
     "tsx": "^4.23.15",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.71.1",
     "vitest": "^2.1.2"
+  },
+  "dependencies": {
+    "ink": "^5.2.1",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1"
   }
 }

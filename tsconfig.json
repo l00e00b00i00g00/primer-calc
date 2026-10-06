@@ -8,6 +8,7 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
+    "jsx": "react",
     "skipLibCheck": true,
     "declaration": true,
     "declarationMap": true,

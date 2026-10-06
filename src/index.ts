@@ -11,6 +11,17 @@ export { evaluateAgainstTarget } from './target.js';
 export { analyzePrimerPair, PAIR_TM_TOLERANCE } from './pair.js';
 export { analyzeBatch } from './batch.js';
 export type { BatchInput, BatchResult } from './batch.js';
+export {
+  detectLocale,
+  resolveLocale,
+  translate,
+  translateWarning,
+  translateSeverity,
+  messages,
+  LOCALES,
+  LOCALE_CODES,
+} from './i18n/index.js';
+export type { Locale, Messages } from './i18n/types.js';
 
 export { PrimerValidationError, assertUnambiguous } from './sequence/validate.js';
 export { MIN_SEQUENCE_LENGTH, MAX_SEQUENCE_LENGTH } from './sequence/validate.js';
