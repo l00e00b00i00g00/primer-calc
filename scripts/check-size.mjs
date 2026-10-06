@@ -11,8 +11,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
 const BUDGETS = {
-  'dist/index.js': 15_000,
-  'dist/index.cjs': 16_500,
+  'dist/index.js': 17_000, // v0.2.1: pair/target/batch/modes APIs
+  'dist/index.cjs': 18_500, // v0.2.1: pair/target/batch/modes APIs
   'dist/worker.js': 7_500,
   'wasm-pkg/primer_calc_wasm_bg.wasm': 30_000,
 };

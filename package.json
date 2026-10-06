@@ -1,6 +1,6 @@
 {
   "name": "@sfstudio_tools/primer-calc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Enterprise & scientific-grade TypeScript library for primer/probe analysis: SantaLucia nearest-neighbor thermodynamics, secondary structures, multiplex cross-dimerization, IUPAC degeneracy.",
   "license": "Apache-2.0",
   "sideEffects": false,
@@ -43,6 +43,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:coverage": "npm run build && vitest run --coverage",
+    "prepublishOnly": "npm run build && npm run build:wasm",
     "example": "tsx examples/quickstart.ts"
   },
   "keywords": [
