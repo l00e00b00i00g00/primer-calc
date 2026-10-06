@@ -22,6 +22,8 @@ const PAIRS: Array<[string, string, boolean]> = [
   ['ATCGATCGATCGATCG', 'CGATCGATCGATCGAT', false], // perfect hetero duplex
   ['AAAA', 'CCCC', false], // no dimer
   ['ATATATATATATATATATAT', 'ATATATATATATATATATAT', true], // weak AT homodimer
+  ['GCGCAGCGC', 'GCGCGCGC', false], // DP: single-nucleotide bulge
+  ['CGCGTGCG', 'GCGCACGC', false], // DP: chained IMM mismatches
 ];
 
 describe('WASM backend loader', () => {

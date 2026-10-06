@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bestHairpin } from '../src/structure/hairpin.js';
 import { bestDimer } from '../src/structure/dimer.js';
+import { tracebackBestAlignment } from '../src/structure/dp-align.js';
 import { analyzeThreePrime } from '../src/bias/threePrime.js';
 import { resolveConditions } from '../src/PrimerAnalyzer.js';
 
@@ -116,6 +117,50 @@ describe('bestDimer', () => {
     expect(d.deltaG as number).toBeLessThanOrEqual(-6);
     expect(d.threePrimeRun).toBe(0);
     expect(d.threePrimeAnchored).toBe(false);
+  });
+});
+
+describe('tracebackBestAlignment (thermodynamic DP)', () => {
+  it('returns null without any Watson–Crick pair', () => {
+    expect(tracebackBestAlignment('AAAA', 'AAAA', 37)).toBeNull();
+    expect(tracebackBestAlignment('', 'ATGC', 37)).toBeNull();
+  });
+
+  it('traces a perfect block identically to the scanner', () => {
+    const dp = tracebackBestAlignment('AAAAAAAAAAAA', 'TTTTTTTTTTTT', 37);
+    expect(dp?.top).toBe('AAAAAAAAAAAA');
+    expect(dp?.bottom).toBe('TTTTTTTTTTTT');
+    expect(dp?.aStart).toBe(0);
+    expect(dp?.bStartRev).toBe(0);
+  });
+
+  it('finds a bulged alignment missed by ungapped blocks (hand-check)', () => {
+    // 8 WC pairs around one top-strand bulge: 6 NN stacks
+    // (GC,CG,GC ×2) + initiation, one terminal… first G/last C: no AT
+    // penalty, +1 bulge penalty.
+    // dH = −60.4 + 0.2 + 3.0 = −57.2 ; dS = −152.0 − 5.7 = −157.7.
+    const dp = tracebackBestAlignment('GCGCAGCGC', 'CGCGCGCG', 37);
+    expect(dp).not.toBeNull();
+    expect(dp?.top).toBe('GCGCAGCGC');
+    expect(dp?.bottom).toBe('CGCG-CGCG');
+    // bestDimer surfaces it (ΔG°37 ≈ −8.29): ungapped blocks peak ≈ −4.7.
+    const d = bestDimer('GCGCAGCGC', 'GCGCGCGC', cond, false);
+    expect(d.found).toBe(true);
+    expect(d.deltaG as number).toBeCloseTo(-8.29, 1);
+    expect(d.pairedBases).toBe(8);
+  });
+
+  it('chains mismatches through consecutive IMM steps', () => {
+    // Two isolated G·T mismatches separated by one WC pair: DP traces
+    // 7 WC pairs (aStart 1), terminal-mismatch extension stabilizes further.
+    const dp = tracebackBestAlignment('CGCGTGCG', 'CGCACGCG', 37);
+    expect(dp?.top).toBe('GCGTGCG');
+    expect(dp?.bottom).toBe('CGCACGC');
+    expect(dp?.aStart).toBe(1);
+    const d = bestDimer('CGCGTGCG', 'GCGCACGC', cond, false);
+    expect(d.found).toBe(true);
+    expect(d.pairedBases).toBe(7);
+    expect(d.deltaG as number).toBeCloseTo(-10.8, 1);
   });
 });
 

@@ -34,6 +34,8 @@ export { meltingTemperature, dimerMeltingTemp } from './thermo/tm.js';
 
 export { bestHairpin } from './structure/hairpin.js';
 export { bestDimer } from './structure/dimer.js';
+export { tracebackBestAlignment } from './structure/dp-align.js';
+export type { DpAlignment } from './structure/dp-align.js';
 export { analyzeThreePrime } from './bias/threePrime.js';
 export { crossDimerizationMatrix } from './multiplex/pool.js';
 export { crossDimerizationParallel } from './multiplex/parallel.js';

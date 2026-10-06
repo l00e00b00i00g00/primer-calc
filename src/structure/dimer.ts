@@ -3,8 +3,8 @@ import type { DuplexFlanks } from '../thermo/nearest-neighbor.js';
 import { gibbsFreeEnergy } from '../thermo/gibbs.js';
 import { alignmentThermodynamics } from '../thermo/nearest-neighbor.js';
 import { dimerMeltingTemp } from '../thermo/tm.js';
+import { tracebackBestAlignment } from './dp-align.js';
 import { isWatsonCrickPair } from '../sequence/iupac.js';
-
 /** Minimum 3′-terminal paired run (nt) considered polymerase-extendable. */
 export const ANCHORED_RUN_MIN = 2;
 
@@ -17,12 +17,12 @@ interface ScoredBlock {
 }
 
 /**
- * Most stable ungapped dimer between `a` (5′ → 3′) and `b` (5′ → 3′).
+ * Most stable dimer between `a` (5′ → 3′) and `b` (5′ → 3′).
  *
- * Strand `b` is scanned in antiparallel orientation over every offset; each
- * maximal Watson–Crick block — plus merges across a single internal mismatch
- * (one shared initiation) — is scored with SantaLucia thermodynamics,
- * including single-nucleotide dangling ends (Bommarito et al. 2000).
+ * Candidate generators union: ungapped WC blocks, single-mismatch merges,
+ * and the thermodynamic DP traceback (bulges, chained mismatches). Every
+ * candidate is fully scored (SantaLucia + IMM/TMM + dangling ends) with
+ * terminal-mismatch extensions, and the minimum ΔG wins.
  *
  * @param selfComplementary set for homodimers (symmetry −1.4 e.u., R·ln Ct).
  */
@@ -135,6 +135,11 @@ export function bestDimer(
   };
 
   // Diagonals of the pairing matrix = ungapped offsets.
+  // Candidate generators union: maximal WC blocks, single-mismatch merges,
+  // and the thermodynamic DP traceback. Every candidate is fully scored
+  // (with terminal-mismatch extensions) and the minimum wins, so the DP
+  // can only improve on — never regress — the block scan.
+  const raw: Array<{ top: string; bottom: string; aStart: number; bStartRev: number }> = [];
   for (let d = -(brev.length - 1); d <= A.length - 1; d++) {
     // Collect overlap positions (i, j) with i - j = d, j ascending.
     const cells: Array<[number, number]> = [];
@@ -170,7 +175,7 @@ export function bestDimer(
       k = k2 + 1;
     }
     for (const bl of blocks) {
-      consider(bl.top, bl.bottom, bl.aStart, bl.bStartRev);
+      raw.push({ top: bl.top, bottom: bl.bottom, aStart: bl.aStart, bStartRev: bl.bStartRev });
     }
     // Single-mismatch-bridged merges (one shared initiation).
     for (let bi = 0; bi + 1 < blocks.length; bi++) {
@@ -181,9 +186,16 @@ export function bestDimer(
       if (gapA === 1 && gapB === 1) {
         const top = left.top + A[left.aStart + left.length] + right.top;
         const bottom = left.bottom + brev[left.bStartRev + left.length] + right.bottom;
-        consider(top, bottom, left.aStart, left.bStartRev);
+        raw.push({ top, bottom, aStart: left.aStart, bStartRev: left.bStartRev });
       }
     }
+  }
+  const dp = tracebackBestAlignment(A, brev, cond.eval_temp_c);
+  if (dp) {
+    raw.push({ top: dp.top, bottom: dp.bottom, aStart: dp.aStart, bStartRev: dp.bStartRev });
+  }
+  for (const r of raw) {
+    consider(r.top, r.bottom, r.aStart, r.bStartRev);
   }
   return best;
 }

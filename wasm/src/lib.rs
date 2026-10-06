@@ -380,6 +380,10 @@ fn score_alignment(
     if self_comp {
         ds -= 1.4;
     }
+    // DP tracebacks may carry single-nucleotide bulges ('-'): flat penalty.
+    let bulges = top.iter().filter(|&&c| c == b'-').count()
+        + bot.iter().filter(|&&c| c == b'-').count();
+    dh += 3.0 * bulges as f64;
     Some((dh, ds, paired.len()))
 }
 
@@ -421,6 +425,122 @@ fn leading_run_cond(dep: &[u8], reached: bool) -> usize {
         return 0;
     }
     dep.iter().take_while(|&&c| c != b'-').count()
+}
+
+/// Thermodynamic local alignment (Smith–Waterman over WC-pair states).
+/// Returns (top, bottom, a_start, b_start, deltaG); `-` marks bulges.
+/// Mirrors the TypeScript engine (`dp-align.ts`) transition by transition.
+fn dp_traceback(a: &[u8], brev: &[u8], eval_temp_c: f64) -> Option<(Vec<u8>, Vec<u8>, usize, usize, f64)> {
+    const START: i8 = 0;
+    const STACK: i8 = 1;
+    const MISMATCH: i8 = 2;
+    const BULGE_TOP: i8 = 3;
+    const BULGE_BOT: i8 = 4;
+    let n = a.len();
+    let m = brev.len();
+    if n == 0 || m == 0 {
+        return None;
+    }
+    let t_k = eval_temp_c + ZERO_C;
+    let dg_init = 0.2 - t_k * -5.7 / 1000.0;
+    let at = |i: usize, j: usize| i * m + j;
+    let mut s = vec![f64::INFINITY; n * m];
+    let mut p = vec![0i8; n * m];
+    let mut best = f64::INFINITY;
+    let mut bi = 0usize;
+    let mut bj = 0usize;
+    let mut found = false;
+    for i in 0..n {
+        for j in 0..m {
+            if !is_wc(a[i], brev[j]) {
+                continue;
+            }
+            let mut v = dg_init;
+            let mut pred = START;
+            if i > 0 && j > 0 && s[at(i - 1, j - 1)] < f64::INFINITY {
+                if let Some((h, st)) = nn_params(a[i - 1], a[i], brev[j - 1], brev[j]) {
+                    // Same association as TypeScript: S + (dH − T·dS/1000).
+                    let step = h - t_k * st / 1000.0;
+                    let cand = s[at(i - 1, j - 1)] + step;
+                    if cand < v {
+                        v = cand;
+                        pred = STACK;
+                    }
+                }
+            }
+            if i >= 2 && j >= 2 && s[at(i - 2, j - 2)] < f64::INFINITY {
+                if let (Some((h1, s1)), Some((h2, s2))) = (
+                    imm_params(a[i - 2], a[i - 1], brev[j - 2], brev[j - 1]),
+                    imm_params(a[i - 1], a[i], brev[j - 1], brev[j]),
+                ) {
+                    let step = h1 + h2 - t_k * (s1 + s2) / 1000.0;
+                    let cand = s[at(i - 2, j - 2)] + step;
+                    if cand < v {
+                        v = cand;
+                        pred = MISMATCH;
+                    }
+                }
+            }
+            if i >= 2 && j >= 1 && s[at(i - 2, j - 1)] < f64::INFINITY {
+                let cand = s[at(i - 2, j - 1)] + 3.0;
+                if cand < v {
+                    v = cand;
+                    pred = BULGE_TOP;
+                }
+            }
+            if i >= 1 && j >= 2 && s[at(i - 1, j - 2)] < f64::INFINITY {
+                let cand = s[at(i - 1, j - 2)] + 3.0;
+                if cand < v {
+                    v = cand;
+                    pred = BULGE_BOT;
+                }
+            }
+            s[at(i, j)] = v;
+            p[at(i, j)] = pred;
+            if v < best {
+                best = v;
+                bi = i;
+                bj = j;
+                found = true;
+            }
+        }
+    }
+    if !found {
+        return None;
+    }
+    let mut ci = bi;
+    let mut cj = bj;
+    let mut tops: Vec<u8> = Vec::new();
+    let mut bots: Vec<u8> = Vec::new();
+    loop {
+        tops.push(a[ci]);
+        bots.push(brev[cj]);
+        let t = p[at(ci, cj)];
+        if t == START {
+            break;
+        } else if t == STACK {
+            ci -= 1;
+            cj -= 1;
+        } else if t == MISMATCH {
+            tops.push(a[ci - 1]);
+            bots.push(brev[cj - 1]);
+            ci -= 2;
+            cj -= 2;
+        } else if t == BULGE_TOP {
+            tops.push(a[ci - 1]);
+            bots.push(b'-');
+            ci -= 2;
+            cj -= 1;
+        } else {
+            tops.push(b'-');
+            bots.push(brev[cj - 1]);
+            ci -= 1;
+            cj -= 2;
+        }
+    }
+    tops.reverse();
+    bots.reverse();
+    Some((tops, bots, ci, cj, best))
 }
 
 fn scan(
@@ -526,6 +646,11 @@ fn scan(
 
     let alo = 0isize - (brev.len() as isize - 1);
     let ahi = a.len() as isize - 1;
+    // Candidate generators union: maximal WC blocks, single-mismatch
+    // merges, and the thermodynamic DP traceback. Every candidate is fully
+    // scored and the minimum wins, so the DP can only improve on — never
+    // regress — the block scan.
+    let mut raw: Vec<(Vec<u8>, Vec<u8>, usize, usize)> = Vec::new();
     for d in alo..=ahi {
         let cells: Vec<(usize, usize)> = (0..a.len())
             .filter_map(|i| {
@@ -551,7 +676,12 @@ fn scan(
             k = k2 + 1;
         }
         for &(i0, j0, len) in &blocks {
-            extend(&a[i0..i0 + len], &brev[j0..j0 + len], i0, j0, &mut best);
+            raw.push((
+                a[i0..i0 + len].to_vec(),
+                brev[j0..j0 + len].to_vec(),
+                i0,
+                j0,
+            ));
         }
         for w in blocks.windows(2) {
             let (li, lj, llen) = w[0];
@@ -563,9 +693,15 @@ fn scan(
                 let mut bot = Vec::from(&brev[lj..lj + llen]);
                 bot.push(brev[lj + llen]);
                 bot.extend_from_slice(&brev[rj..rj + w[1].2]);
-                extend(&top, &bot, li, lj, &mut best);
+                raw.push((top, bot, li, lj));
             }
         }
+    }
+    if let Some((top, bot, i0, j0, _dg)) = dp_traceback(a, brev, eval_temp_c) {
+        raw.push((top, bot, i0, j0));
+    }
+    for (top, bot, i0, j0) in &raw {
+        extend(top, bot, *i0, *j0, &mut best);
     }
     best
 }

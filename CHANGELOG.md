@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   per end. New exports: `IMM_TABLE`, `TMM_TABLE`, `immParams`, `tmmParams`;
   `DuplexThermo` gains `terminalMM`. Mismatched dimers are scored, never
   silently broken.
+- Thermodynamic DP local alignment (`tracebackBestAlignment`, O(n·m)):
+  WC stacks, chained IMM mismatches, single-nucleotide bulges. Candidate
+  generators union (blocks + merges + DP traceback) fully scored, minimum
+  wins — strictly improves on, never regresses, the block scan. Ported to
+  the Rust core with bit-exact parity.
 
 ## [0.1.0] - 2026-10-06
 
