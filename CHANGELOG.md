@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Dimer terminal extensions and flank lookup use strand-consumed spans
+  instead of string lengths, fixing wrong-base selection on bulged
+  alignments (TypeScript + Rust).
+- Structure engines (`bestDimer`, `bestHairpin`, `tracebackBestAlignment`)
+  reject degenerate IUPAC input with `AMBIGUOUS_SEQUENCE` instead of
+  crashing on NN lookups; pool/worker paths canonicalize first.
+- `evaluateAgainstTarget` converts dimer Tm to the configured unit.
+- Rust core clippy-clean (type aliases, no dead fields).
+- `analyzePrimerPair` scales the Tm-gap tolerance to Fahrenheit output.
+- Completed the public export surface (threshold constants, `DuplexThermo`,
+  `assertUnambiguous`, `toUnit`, `assembleCrossDimerization`, …).
+- Locale detection treats empty variables as unset (POSIX gettext) and lets
+  an explicit terminal setting win; warning templates never leak raw
+  `{placeholders}` (fallback to English); all user-facing numbers render
+  with locale decimal separators (Latin digits forced).
+
 ## 0.3.0
 
 ### Minor Changes

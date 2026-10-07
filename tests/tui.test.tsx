@@ -97,6 +97,8 @@ describe('formatAnalysisText', () => {
     const fr = formatAnalysisText('fr', analysis);
     expect(fr).toContain('Alertes:');
     expect(fr).not.toContain('Warnings:');
+    expect(fr).toContain('Tm: 54,98 °C');
+    expect(fr).toContain('47,4%');
   });
 
   it('renders clean and hairpin-free analyses', () => {

@@ -171,7 +171,7 @@ maioria dos terminais o exibe da esquerda para a direita (sem bidirecional).
 ## 🧪 Testes e CI
 
 ```bash
-npm test             # Vitest: 212 testes (gold standards, edge cases, conformidade spec)
+npm test             # Vitest: 225 testes (gold standards, edge cases, conformidade spec)
 npm run test:coverage  # build + cobertura V8: 100 % linhas/funções/ramos
 npm run build        # tsup + worker navegador: ESM + CJS + .d.ts + dist/worker.js + dist/cli.js
 npm run build:wasm   # Rust → wasm-pkg/ (alvos Node.js + navegadores)

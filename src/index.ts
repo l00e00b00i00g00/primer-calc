@@ -21,6 +21,7 @@ export {
   LOCALES,
   LOCALE_CODES,
 } from './i18n/index.js';
+export { formatNumber, localizeNumberString } from './i18n/numbers.js';
 export type { Locale, Messages } from './i18n/types.js';
 
 export { PrimerValidationError, assertUnambiguous } from './sequence/validate.js';

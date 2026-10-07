@@ -1,5 +1,6 @@
 import type { AnalysisWarning } from '../types.js';
 import type { Locale, Messages } from './types.js';
+import { localizeNumberString } from './numbers.js';
 import { LOCALES } from './types.js';
 import { en } from './locales/en.js';
 import { fr } from './locales/fr.js';
@@ -30,27 +31,20 @@ export function resolveLocale(tag: string | undefined | null): Locale {
   const found = (LOCALE_CODES as readonly string[]).find((c) => c === base);
   return (found ?? 'en') as Locale;
 }
-
 /**
  * Detects the system language, terminal convention first:
  * `LC_ALL` → `LC_MESSAGES` → `LANG` (Linux/macOS), then the
  * `Intl`-provided locale (covers Windows regional settings), else English.
+ * Empty variables count as unset (POSIX gettext semantics).
  */
 export function detectLocale(
   env: Record<string, string | undefined> = process.env,
   intlLocale?: string,
 ): Locale {
-  const fromEnv = env.LC_ALL ?? env.LC_MESSAGES ?? env.LANG ?? env.LANGUAGE ?? null;
-  const resolved = resolveLocale(fromEnv ? fromEnv.split(':')[0] : null);
-  if (resolved !== 'en' || !fromEnv) {
-    // Either a real match, or nothing set at all (fall through to Intl).
-    if (resolved !== 'en') return resolved;
-  }
-  if (intlLocale) {
-    const viaIntl = resolveLocale(intlLocale);
-    if (viaIntl !== 'en') return viaIntl;
-  }
-  // Distinguish "explicit English" from "nothing detected": both → en.
+  const fromEnv = env.LC_ALL || env.LC_MESSAGES || env.LANG || env.LANGUAGE || null;
+  // An explicit terminal setting always wins — including explicit English.
+  if (fromEnv) return resolveLocale(fromEnv.split(':')[0]);
+  if (intlLocale) return resolveLocale(intlLocale);
   return 'en';
 }
 
@@ -157,7 +151,13 @@ export function translateWarning(locale: Locale, warning: AnalysisWarning): stri
     default:
       break; // no variables (info texts, anchored flag, no-binding, …)
   }
-  return translate(locale, key, vars);
+  // Localize numeric slots (units stay raw); then never leak placeholders:
+  // a partially-filled template falls back to the original message.
+  for (const name of Object.keys(vars)) {
+    if (name !== 'unit') vars[name] = localizeNumberString(locale, vars[name] as string);
+  }
+  const rendered = translate(locale, key, vars);
+  return /\{[^}]+\}/.test(rendered) ? warning.message : rendered;
 }
 
 /** Localized severity label. */

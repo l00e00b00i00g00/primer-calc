@@ -169,7 +169,7 @@ die meisten Terminals zeigen es links-nach-rechts (kein Bidi).
 ## 🧪 Tests & CI
 
 ```bash
-npm test             # Vitest: 212 Tests (Goldstandards, Edge Cases, Spec-Konformität)
+npm test             # Vitest: 225 Tests (Goldstandards, Edge Cases, Spec-Konformität)
 npm run test:coverage  # Build + V8-Coverage: 100 % Zeilen/Funktionen/Branches
 npm run build        # tsup + Browser-Worker: ESM + CJS + .d.ts + dist/worker.js + dist/cli.js
 npm run build:wasm   # Rust → wasm-pkg/ (Node.js- + Browser-Targets)

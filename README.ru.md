@@ -169,7 +169,7 @@ Português, Deutsch. Переопределение: флаг `--lang <code>` и
 ## 🧪 Тесты и CI
 
 ```bash
-npm test             # Vitest: 212 тестов (эталоны, крайние случаи, соответствие спеке)
+npm test             # Vitest: 225 тестов (эталоны, крайние случаи, соответствие спеке)
 npm run test:coverage  # сборка + покрытие V8: 100 % строк/функций/ветвей
 npm run build        # tsup + воркер браузера: ESM + CJS + .d.ts + dist/worker.js + dist/cli.js
 npm run build:wasm   # Rust → wasm-pkg/ (цели Node.js + браузеры)

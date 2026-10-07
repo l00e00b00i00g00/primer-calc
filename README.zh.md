@@ -165,7 +165,7 @@ Deutsch。覆盖：`--lang <code>` 参数或 TUI 内 `Ctrl+L`。
 ## 🧪 测试与 CI
 
 ```bash
-npm test             # Vitest: 212 个测试 (金标准、边界、spec 一致性)
+npm test             # Vitest: 225 个测试 (金标准、边界、spec 一致性)
 npm run test:coverage  # 构建 + V8 覆盖率: 行/函数/分支 100%
 npm run build        # tsup + 浏览器 worker: ESM + CJS + .d.ts + dist/worker.js + dist/cli.js
 npm run build:wasm   # Rust → wasm-pkg/ (Node.js + 浏览器目标)

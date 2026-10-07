@@ -6,6 +6,7 @@ import { translate as t, translateWarning, translateSeverity } from '../i18n/ind
 import { PrimerAnalyzer } from '../PrimerAnalyzer.js';
 import type { PrimerAnalysis, SaltMethod, TempUnit } from '../types.js';
 import { hl } from './ui.js';
+import { formatNumber } from '../i18n/numbers.js';
 
 const SALTS: SaltMethod[] = ['vonAhsen', 'owczarzy', 'none'];
 const UNITS: TempUnit[] = ['C', 'F'];
@@ -19,8 +20,8 @@ function saltLabel(locale: Locale, method: SaltMethod): string {
       : t(locale, 'saltNone');
 }
 
-function fmtDeltaG(value: number | null): string {
-  return value === null ? '–' : value.toFixed(2);
+function fmtDeltaG(locale: Parameters<typeof formatNumber>[0], value: number | null): string {
+  return value === null ? '–' : formatNumber(locale, value, 2);
 }
 
 function WarnRow({
@@ -106,6 +107,7 @@ export function AnalyzeScreen({
   );
 
   const unit = UNITS[unitIdx] as TempUnit;
+  const num = (value: number, digits: number): string => formatNumber(locale, value, digits);
   return (
     <Box flexDirection="column">
       {field(
@@ -166,17 +168,17 @@ export function AnalyzeScreen({
             <Text>
               <Text bold>{t(locale, 'resTm')}: </Text>
               <Text color="cyan" bold>
-                {result.tm.toFixed(2)} °{result.tmUnit}
+                {num(result.tm, 2)} °{result.tmUnit}
               </Text>
               <Text>
                 {' '}
-                · {t(locale, 'resGc')}: {result.gcContent.toFixed(1)}% · {t(locale, 'resThermo')}:{' '}
-                {result.deltaH.toFixed(1)}/{result.deltaS.toFixed(1)}
+                · {t(locale, 'resGc')}: {num(result.gcContent, 1)}% · {t(locale, 'resThermo')}:{' '}
+                {num(result.deltaH, 1)}/{num(result.deltaS, 1)}
               </Text>
             </Text>
             <Text>
-              {t(locale, 'resHairpin')}: {fmtDeltaG(result.hairpin.deltaG)} ·{' '}
-              {t(locale, 'resHomodimer')}: {fmtDeltaG(result.homodimer.deltaG)}
+              {t(locale, 'resHairpin')}: {fmtDeltaG(locale, result.hairpin.deltaG)} ·{' '}
+              {t(locale, 'resHomodimer')}: {fmtDeltaG(locale, result.homodimer.deltaG)}
               {result.homodimer.found
                 ? result.homodimer.threePrimeAnchored
                   ? ` (${t(locale, 'resAnchored')})`
@@ -184,7 +186,7 @@ export function AnalyzeScreen({
                 : ''}
               {' · '}
               {t(locale, 'resThreePrime')}:{' '}
-              {result.threePrime.deltaG37 === null ? '–' : result.threePrime.deltaG37.toFixed(2)}
+              {result.threePrime.deltaG37 === null ? '–' : num(result.threePrime.deltaG37, 2)}
             </Text>
             <Text>
               {t(locale, 'resDegeneracy')}: {result.degeneracy.factor}

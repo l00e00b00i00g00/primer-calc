@@ -6,6 +6,7 @@ import { translate as t } from '../i18n/index.js';
 import { MultiplexPool } from '../MultiplexPool.js';
 import { normalizeSequence } from '../sequence/validate.js';
 import { hl } from './ui.js';
+import { formatNumber } from '../i18n/numbers.js';
 import type { PoolPrimer } from '../types.js';
 
 function cellColor(deltaG: number): 'red' | 'yellow' | 'green' {
@@ -105,7 +106,7 @@ export function MultiplexScreen({
                   </Text>
                 ) : (
                   <Text key={j} color={cellColor(v)}>
-                    {`${v.toFixed(1).padStart(6)} `}
+                    {`${formatNumber(locale, v, 1).padStart(6)} `}
                   </Text>
                 ),
               )}
@@ -120,7 +121,7 @@ export function MultiplexScreen({
             )}
             {report.conflicts.map((c, i) => (
               <Text key={i} color={c.severity === 'critical' ? 'red' : 'yellow'}>
-                {c.primerA}×{c.primerB} ΔG={c.deltaG.toFixed(2)}
+                {c.primerA}×{c.primerB} ΔG={formatNumber(locale, c.deltaG, 2)}
               </Text>
             ))}
           </Box>

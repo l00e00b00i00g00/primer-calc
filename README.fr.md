@@ -172,7 +172,7 @@ plupart des terminaux l'affichent de gauche à droite (pas de bidirectionnel).
 ## 🧪 Tests & CI
 
 ```bash
-npm test             # Vitest : 212 tests (standards-or, cas limites, conformité spec)
+npm test             # Vitest : 225 tests (standards-or, cas limites, conformité spec)
 npm run test:coverage  # build + couverture V8 : 100 % lignes/fonctions/branches
 npm run build        # tsup + worker navigateur : ESM + CJS + .d.ts + dist/worker.js + dist/cli.js
 npm run build:wasm   # Rust → wasm-pkg/ (cibles Node.js + navigateurs)

@@ -168,7 +168,7 @@ Deutsch. التجاوز: علم `--lang <code>` أو `Ctrl+L` في TUI.
 ## 🧪 الاختبارات وCI
 
 ```bash
-npm test             # Vitest: 212 اختباراً (معايير ذهبية، حدود، مطابقة)
+npm test             # Vitest: 225 اختباراً (معايير ذهبية، حدود، مطابقة)
 npm run test:coverage  # بناء + تغطية V8: 100% أسطر/دوال/فروع
 npm run build        # tsup + عامل المتصفح: ESM + CJS + .d.ts + dist/worker.js + dist/cli.js
 npm run build:wasm   # Rust → wasm-pkg/ (هدفي Node.js والمتصفحات)
